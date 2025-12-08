@@ -14,6 +14,10 @@ const questsEl = document.getElementById('quests');
 const energyBar = document.getElementById('energyBar');
 const energyText = document.getElementById('energyText');
 const locations = Array.from(document.querySelectorAll('.location'));
+const hint = document.getElementById('hint');
+const interactPrompt = document.getElementById('interactPrompt');
+const toastsEl = document.getElementById('toasts');
+const dpad = document.getElementById('dpad');
 
 const state = {
   x: 100,
@@ -30,6 +34,28 @@ const state = {
   suppressUntilExit: false,
   victoryAwarded: false
 };
+
+let focusedEl = null;
+let hintHidden = false;
+
+function showToast(message) {
+  if (!toastsEl) return;
+  const div = document.createElement('div');
+  div.className = 'toast';
+  div.textContent = message;
+  toastsEl.appendChild(div);
+  setTimeout(() => {
+    div.style.opacity = '0';
+    div.style.transform = 'translateY(6px)';
+    setTimeout(() => div.remove(), 250);
+  }, 1400);
+}
+
+function hideHint() {
+  if (hintHidden) return;
+  hintHidden = true;
+  if (hint) hint.style.display = 'none';
+}
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
@@ -63,11 +89,13 @@ function rankForXP(x) {
 
 function addXP(n) {
   state.xp += n;
+  showToast(`+${n} XP`);
   updateHUD();
 }
 
 function addItem(name) {
   state.inventory.add(name);
+  showToast(`Item: ${name}`);
   updateHUD();
 }
 
@@ -90,6 +118,7 @@ function showPopup(title, bodyBuilder) {
   bodyBuilder(popupBody);
   popup.classList.remove('hidden');
   state.popupOpen = true;
+  hideInteractPrompt();
 }
 
 function hidePopup() {
@@ -240,6 +269,29 @@ function openLocationPopup(key) {
   }
 }
 
+function setFocused(el) {
+  if (focusedEl && focusedEl !== el) focusedEl.classList.remove('focused');
+  focusedEl = el || null;
+  if (focusedEl) focusedEl.classList.add('focused');
+}
+
+function showInteractPrompt() {
+  if (!interactPrompt) return;
+  const mapRect = map.getBoundingClientRect();
+  const pRect = player.getBoundingClientRect();
+  const cx = pRect.left - mapRect.left + pRect.width / 2;
+  const cy = pRect.top - mapRect.top;
+  interactPrompt.style.left = `${cx}px`;
+  interactPrompt.style.top = `${cy}px`;
+  interactPrompt.style.transform = 'translate(-50%, -120%)';
+  interactPrompt.classList.remove('hidden');
+}
+
+function hideInteractPrompt() {
+  if (!interactPrompt) return;
+  interactPrompt.classList.add('hidden');
+}
+
 function rectsIntersect(a, b) {
   return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
 }
@@ -255,19 +307,27 @@ function checkOverlap() {
     }
   }
   if (!overlap) {
+    setFocused(null);
     state.currentOverlap = null;
     if (state.suppressUntilExit) state.suppressUntilExit = false;
+    hideInteractPrompt();
     return;
   }
   if (state.suppressUntilExit) {
+    setFocused(overlap);
     state.currentOverlap = overlap;
+    hideInteractPrompt();
     return;
   }
-  if (overlap !== state.currentOverlap && !state.popupOpen) {
-    state.currentOverlap = overlap;
-    openLocationPopup(overlap.dataset.location);
-  } else {
-    state.currentOverlap = overlap;
+  const changed = overlap !== state.currentOverlap;
+  state.currentOverlap = overlap;
+  setFocused(overlap);
+  if (!state.popupOpen) {
+    if (changed) {
+      openLocationPopup(overlap.dataset.location);
+    } else {
+      showInteractPrompt();
+    }
   }
 }
 
@@ -290,6 +350,7 @@ function gameLoop() {
     state.y = clamp(state.y + vy, 0, maxY);
     updatePlayer();
     checkOverlap();
+    hideHint();
   }
   requestAnimationFrame(gameLoop);
 }
@@ -335,6 +396,10 @@ window.addEventListener('keydown', e => {
     state.keys[e.key] = true;
     e.preventDefault();
   }
+  if ((e.key === 'e' || e.key === 'E' || e.code === 'KeyE') && state.currentOverlap && !state.popupOpen) {
+    openLocationPopup(state.currentOverlap.dataset.location);
+    e.preventDefault();
+  }
   if (e.key === 'Escape' && state.popupOpen) hidePopup();
 });
 
@@ -345,9 +410,41 @@ window.addEventListener('keyup', e => {
   }
 });
 
+map.addEventListener('click', e => {
+  if (state.popupOpen) return;
+  const el = e.target.closest('.location');
+  if (el) {
+    openLocationPopup(el.dataset.location);
+  }
+});
+
+function bindDpad() {
+  if (!dpad) return;
+  const mapKey = {
+    up: 'ArrowUp',
+    down: 'ArrowDown',
+    left: 'ArrowLeft',
+    right: 'ArrowRight'
+  };
+  function press(dir, down) {
+    const key = mapKey[dir];
+    if (!key) return;
+    state.keys[key] = !!down;
+    if (down) hideHint();
+  }
+  dpad.querySelectorAll('button[data-dir]').forEach(btn => {
+    const dir = btn.getAttribute('data-dir');
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); press(dir, true); });
+    btn.addEventListener('pointerup', e => { e.preventDefault(); press(dir, false); });
+    btn.addEventListener('pointerleave', e => { e.preventDefault(); press(dir, false); });
+    btn.addEventListener('pointercancel', e => { e.preventDefault(); press(dir, false); });
+  });
+}
+
 updatePlayer();
 updateHUD();
 checkOverlap();
+bindDpad();
 requestAnimationFrame(gameLoop);
 
 })();
