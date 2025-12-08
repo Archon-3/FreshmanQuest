@@ -27,8 +27,9 @@ const state = {
   energy: 80,
   xp: 0,
   inventory: new Set(),
-  quests: { firstClass: false, studentId: false, libraryVisit: false, timetable: false, eatMeal: false },
-  flags: { dormKey: false, firstClassBadge: false, libraryCard: false, mealCoupon: false, studentId: false, timetable: false, ateMeal: false },
+  quests: { firstClass: false, studentId: false, libraryVisit: false, timetable: false, eatMeal: false, chooseSchool: false, programOrientation: false, completeProgramCourses: false, chooseDepartment: false, completeDepartmentCourses: false },
+  flags: { dormKey: false, firstClassBadge: false, libraryCard: false, mealCoupon: false, studentId: false, timetable: false, ateMeal: false, dormStudyDone: false },
+  meta: { school: null, department: null, coursesDone: 0, courses: {}, programCourses: {}, booksRead: 0 },
   currentOverlap: null,
   popupOpen: false,
   suppressUntilExit: false,
@@ -130,142 +131,33 @@ function hidePopup() {
 popupClose.addEventListener('click', hidePopup);
 
 function openLocationPopup(key) {
-  if (key === 'dorm') {
-    showPopup('Dormitory', body => {
-      const p = document.createElement('p');
-      p.textContent = 'Welcome to campus. Take your Dorm Key to begin.';
-      body.appendChild(p);
-      const btn = document.createElement('button');
-      btn.className = 'btn primary';
-      btn.textContent = state.flags.dormKey ? 'Dorm Key Collected' : 'Take Dorm Key';
-      btn.disabled = state.flags.dormKey;
-      btn.addEventListener('click', () => {
-        if (!state.flags.dormKey) {
-          state.flags.dormKey = true;
-          addItem('Dorm Key');
-          btn.textContent = 'Dorm Key Collected';
-          btn.disabled = true;
-        }
-      });
-      body.appendChild(btn);
-    });
-  } else if (key === 'classroom') {
-    showPopup('Classroom', body => {
-      const p = document.createElement('p');
-      p.textContent = 'Attend your first class and earn your badge.';
-      body.appendChild(p);
-      const btn = document.createElement('button');
-      btn.className = 'btn primary';
-      const completed = state.flags.firstClassBadge;
-      btn.textContent = completed ? 'First Class Completed' : 'Enter Classroom';
-      btn.disabled = completed;
-      btn.addEventListener('click', () => {
-        if (!state.flags.firstClassBadge) {
-          state.flags.firstClassBadge = true;
-          addItem('First Class Badge');
-          addXP(10);
-          completeQuest('firstClass');
-          btn.textContent = 'First Class Completed';
-          btn.disabled = true;
-        }
-      });
-      body.appendChild(btn);
-    });
-  } else if (key === 'library') {
-    showPopup('Library', body => {
-      const p = document.createElement('p');
-      p.textContent = 'Register for a library card.';
-      body.appendChild(p);
-      const btn = document.createElement('button');
-      btn.className = 'btn primary';
-      const completed = state.flags.libraryCard;
-      btn.textContent = completed ? 'Library Card Collected' : 'Get Library Card';
-      btn.disabled = completed;
-      btn.addEventListener('click', () => {
-        if (!state.flags.libraryCard) {
-          state.flags.libraryCard = true;
-          addItem('Library Card');
-          addXP(20);
-          completeQuest('libraryVisit');
-          btn.textContent = 'Library Card Collected';
-          btn.disabled = true;
-        }
-      });
-      body.appendChild(btn);
-    });
-  } else if (key === 'cafeteria') {
-    showPopup('Cafeteria', body => {
-      const p = document.createElement('p');
-      p.textContent = 'Grab a meal and recharge.';
-      body.appendChild(p);
-      const btn1 = document.createElement('button');
-      btn1.className = 'btn';
-      const gotCoupon = state.flags.mealCoupon;
-      btn1.textContent = gotCoupon ? 'Meal Coupon Collected' : 'Get Meal Coupon';
-      btn1.disabled = gotCoupon;
-      btn1.addEventListener('click', () => {
-        if (!state.flags.mealCoupon) {
-          state.flags.mealCoupon = true;
-          addItem('Meal Coupon');
-          btn1.textContent = 'Meal Coupon Collected';
-          btn1.disabled = true;
-        }
-      });
-      const btn2 = document.createElement('button');
-      btn2.className = 'btn primary';
-      const ate = state.flags.ateMeal;
-      btn2.textContent = ate ? 'Meal Eaten' : 'Eat Meal';
-      btn2.disabled = ate;
-      btn2.addEventListener('click', () => {
-        if (!state.flags.ateMeal) {
-          state.flags.ateMeal = true;
-          setEnergy(100);
-          addXP(5);
-          completeQuest('eatMeal');
-          btn2.textContent = 'Meal Eaten';
-          btn2.disabled = true;
-        }
-      });
-      body.appendChild(btn1);
-      body.appendChild(btn2);
-    });
-  } else if (key === 'admin') {
-    showPopup('Admin Office', body => {
-      const p = document.createElement('p');
-      p.textContent = 'Complete your registration tasks.';
-      body.appendChild(p);
-      const btn1 = document.createElement('button');
-      btn1.className = 'btn primary';
-      const gotId = state.flags.studentId;
-      btn1.textContent = gotId ? 'Student ID Collected' : 'Get Student ID Card';
-      btn1.disabled = gotId;
-      btn1.addEventListener('click', () => {
-        if (!state.flags.studentId) {
-          state.flags.studentId = true;
-          addItem('Student ID Card');
-          addXP(15);
-          completeQuest('studentId');
-          btn1.textContent = 'Student ID Collected';
-          btn1.disabled = true;
-        }
-      });
-      const btn2 = document.createElement('button');
-      btn2.className = 'btn';
-      const gotTT = state.flags.timetable;
-      btn2.textContent = gotTT ? 'Timetable Collected' : 'Collect Timetable';
-      btn2.disabled = gotTT;
-      btn2.addEventListener('click', () => {
-        if (!state.flags.timetable) {
-          state.flags.timetable = true;
-          addItem('Timetable');
-          completeQuest('timetable');
-          btn2.textContent = 'Timetable Collected';
-          btn2.disabled = true;
-        }
-      });
-      body.appendChild(btn1);
-      body.appendChild(btn2);
-    });
+  const helpers = {
+    addXP,
+    addItem,
+    completeQuest,
+    setEnergy,
+    state
+  };
+  const UI = window.UI || {};
+  if (key === 'dorm' && typeof UI.dorm === 'function') {
+    showPopup('Dormitory', body => UI.dorm(body, state, helpers));
+    return;
+  }
+  if (key === 'classroom' && typeof UI.classroom === 'function') {
+    showPopup('Classroom', body => UI.classroom(body, state, helpers));
+    return;
+  }
+  if (key === 'library' && typeof UI.library === 'function') {
+    showPopup('Library', body => UI.library(body, state, helpers));
+    return;
+  }
+  if (key === 'cafeteria' && typeof UI.cafeteria === 'function') {
+    showPopup('Cafeteria', body => UI.cafeteria(body, state, helpers));
+    return;
+  }
+  if (key === 'admin' && typeof UI.admin === 'function') {
+    showPopup('Admin Office', body => UI.admin(body, state, helpers));
+    return;
   }
 }
 
@@ -380,8 +272,9 @@ function resetGame() {
   state.energy = 80;
   state.xp = 0;
   state.inventory = new Set();
-  state.quests = { firstClass: false, studentId: false, libraryVisit: false, timetable: false, eatMeal: false };
-  state.flags = { dormKey: false, firstClassBadge: false, libraryCard: false, mealCoupon: false, studentId: false, timetable: false, ateMeal: false };
+  state.quests = { firstClass: false, studentId: false, libraryVisit: false, timetable: false, eatMeal: false, chooseSchool: false, programOrientation: false, completeProgramCourses: false, chooseDepartment: false, completeDepartmentCourses: false };
+  state.flags = { dormKey: false, firstClassBadge: false, libraryCard: false, mealCoupon: false, studentId: false, timetable: false, ateMeal: false, dormStudyDone: false };
+  state.meta = { school: null, department: null, coursesDone: 0, courses: {}, programCourses: {}, booksRead: 0 };
   state.currentOverlap = null;
   state.popupOpen = false;
   state.suppressUntilExit = false;

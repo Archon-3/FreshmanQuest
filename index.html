@@ -19,22 +19,45 @@
       <div id="interactPrompt" class="interact hidden">Press E or Click</div>
 
       <div class="location dorm" data-location="dorm" style="left:40px;top:420px;width:160px;height:120px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
         <span class="label">Dormitory</span>
       </div>
 
       <div class="location classroom" data-location="classroom" style="left:80px;top:70px;width:200px;height:120px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
         <span class="label">Classroom</span>
       </div>
 
       <div class="location library" data-location="library" style="left:600px;top:60px;width:220px;height:140px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
         <span class="label">Library</span>
       </div>
 
       <div class="location cafeteria" data-location="cafeteria" style="left:540px;top:320px;width:220px;height:140px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
         <span class="label">Cafeteria</span>
       </div>
 
       <div class="location admin" data-location="admin" style="left:260px;top:320px;width:220px;height:120px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
         <span class="label">Admin Office</span>
       </div>
 
@@ -78,6 +101,11 @@
           <li data-quest="libraryVisit"><span class="checkbox"></span> Visit the library</li>
           <li data-quest="timetable"><span class="checkbox"></span> Collect your timetable</li>
           <li data-quest="eatMeal"><span class="checkbox"></span> Eat at the cafeteria</li>
+          <li data-quest="chooseSchool"><span class="checkbox"></span> Choose your school</li>
+          <li data-quest="programOrientation"><span class="checkbox"></span> Complete program orientation</li>
+          <li data-quest="completeProgramCourses"><span class="checkbox"></span> Finish program core courses</li>
+          <li data-quest="chooseDepartment"><span class="checkbox"></span> Choose your department</li>
+          <li data-quest="completeDepartmentCourses"><span class="checkbox"></span> Finish department courses</li>
         </ul>
       </div>
 
@@ -106,6 +134,11 @@
     </div>
   </div>
 
+  <script src="ui-dorm.js" defer></script>
+  <script src="ui-classroom.js" defer></script>
+  <script src="ui-library.js" defer></script>
+  <script src="ui-cafeteria.js" defer></script>
+  <script src="ui-admin.js" defer></script>
   <script src="game.js" defer></script>
 </body>
 </html>
