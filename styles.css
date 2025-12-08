@@ -7,6 +7,7 @@ body {
   font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: #1f2937;
   background: linear-gradient(180deg, #f7f9ff 0%, #eef2ff 100%);
+  overflow: hidden;
 }
 
 .layout {
@@ -61,6 +62,13 @@ body {
   border-radius: 999px;
   border: 1px solid rgba(229, 231, 235, 0.9);
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.location.focused {
+  border-color: #a5b4fc;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 0 0 4px rgba(79, 70, 229, 0.12), 0 16px 28px rgba(15,23,42,0.1);
 }
 
 .location.dorm { background: #ede9fe; }
@@ -203,10 +211,89 @@ button { cursor: pointer; }
 .victory-card p { margin: 0 0 16px; color: #374151; }
 .victory-card button { padding: 10px 14px; border-radius: 10px; border: 1px solid #4f46e5; background: #4f46e5; color: #fff; font-weight: 700; }
 
+.hidden { display: none !important; }
+
+.hint {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  z-index: 5;
+  user-select: none;
+}
+
+.interact {
+  position: absolute;
+  background: #111827;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.25);
+  z-index: 6;
+  pointer-events: none;
+}
+
+.location { cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+.location:hover { transform: scale(1.02); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 12px 26px rgba(15, 23, 42, 0.08); }
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  z-index: 50;
+}
+.toast {
+  background: #111827;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.3);
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.dpad {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 120px;
+  height: 120px;
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 6px;
+  z-index: 7;
+}
+.dpad button {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(15,23,42,0.12);
+  font-weight: 800;
+}
+.dpad button:active {
+  transform: translateY(1px);
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
   .layout { flex-direction: column; align-items: stretch; }
   #map { width: 100%; height: 60vh; min-height: 440px; }
   #hud { width: 100%; }
+}
+
+@media (pointer: coarse) {
+  .dpad { display: grid; }
 }
 

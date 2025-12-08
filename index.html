@@ -15,6 +15,9 @@
     <div id="map">
       <div id="player" class="player"></div>
 
+      <div id="hint" class="hint">Use Arrow Keys to move. Press E or click a building to interact.</div>
+      <div id="interactPrompt" class="interact hidden">Press E or Click</div>
+
       <div class="location dorm" data-location="dorm" style="left:40px;top:420px;width:160px;height:120px;">
         <span class="label">Dormitory</span>
       </div>
@@ -33,6 +36,20 @@
 
       <div class="location admin" data-location="admin" style="left:260px;top:320px;width:220px;height:120px;">
         <span class="label">Admin Office</span>
+      </div>
+
+      <div id="toasts" class="toasts"></div>
+
+      <div class="dpad" id="dpad">
+        <div></div>
+        <button data-dir="up">↑</button>
+        <div></div>
+        <button data-dir="left">←</button>
+        <div></div>
+        <button data-dir="right">→</button>
+        <div></div>
+        <button data-dir="down">↓</button>
+        <div></div>
       </div>
     </div>
 
@@ -62,6 +79,11 @@
           <li data-quest="timetable"><span class="checkbox"></span> Collect your timetable</li>
           <li data-quest="eatMeal"><span class="checkbox"></span> Eat at the cafeteria</li>
         </ul>
+      </div>
+
+      <div class="panel">
+        <h2>Help</h2>
+        <div>Move with Arrow Keys. Interact with E or by clicking a building. Close popups with Esc.</div>
       </div>
     </aside>
   </div>
