@@ -5,7 +5,7 @@ import pygame
 from pygame import Rect
 
 from game.state import GameState
-from game.consts import SCREEN_W, SCREEN_H, MAP_W, MAP_H, HUD_W, FPS, WHITE, BLACK, SLATE, BG_TOP, GRASS1, GRASS2, PATH, BORDER, PANEL, TEXT, MUTED, PRIMARY, SUCCESS, ENERGY_BG, ENERGY_BAR, DOOR
+from game.consts import SCREEN_W, SCREEN_H, MAP_W, MAP_H, HUD_W, FPS, WHITE, BLACK, SLATE, BG_TOP, GRASS1, GRASS2, ASPHALT, ASPHALT_DARK, ROAD_LINE, ROAD_EDGE, BORDER, PANEL, TEXT, MUTED, PRIMARY, SUCCESS, ENERGY_BG, ENERGY_BAR, DOOR
 from game.buildings import get_buildings, color_for
 from game.widgets import Button
 from game import ui as UI
@@ -31,15 +31,46 @@ player_rect = Rect(state.x, state.y, PLAYER_SIZE, PLAYER_SIZE)
 
 buildings = get_buildings()
 
-# Generate decor trees not overlapping buildings
+def is_on_road(x, y, road_width=50, side_road_width=40, margin=0):
+    """Check if a point (or player center) is on a road."""
+    main_road_y = MAP_H // 2
+    main_road_margin = road_width // 2 + margin
+    
+    # Check if on main horizontal road
+    if abs(y - main_road_y) < main_road_margin:
+        return True
+    
+    # Check if on any vertical road connecting to buildings
+    for b in buildings:
+        building_rect = b['rect']
+        gate_x = building_rect.centerx
+        gate_y = building_rect.bottom
+        
+        road_margin = side_road_width // 2 + margin
+        if abs(x - gate_x) < road_margin:
+            if gate_y < main_road_y:
+                if gate_y <= y <= main_road_y:
+                    return True
+            else:
+                if main_road_y <= y <= gate_y:
+                    return True
+    
+    return False
+
+def is_player_on_road(player_rect, road_width=50, side_road_width=40):
+    """Check if player (using center point) is on a road."""
+    px, py = player_rect.centerx, player_rect.centery
+    return is_on_road(px, py, road_width, side_road_width, margin=2)
+
+# Generate decor trees not overlapping buildings or roads
 TREE_POS = []
 random.seed(42)
 for _ in range(26):
-    for tries in range(25):
+    for tries in range(50):
         tx = random.randint(12, MAP_W - 12)
         ty = random.randint(12, MAP_H - 12)
         pt_rect = Rect(tx-8, ty-8, 16, 16)
-        if not any(pt_rect.colliderect(b['rect']) for b in buildings):
+        if not any(pt_rect.colliderect(b['rect']) for b in buildings) and not is_on_road(tx, ty):
             TREE_POS.append((tx, ty))
             break
 
@@ -66,11 +97,495 @@ def draw_grass(surface: pygame.Surface):
             pygame.draw.rect(surface, c, Rect(x, y, 16, 16))
 
 
+def draw_gates(surface: pygame.Surface):
+    """Draw yellow gates at the left and right edges of the main road."""
+    main_road_y = MAP_H // 2
+    gate_width = 100  # Larger gate
+    gate_height = 120  # Taller gate
+    
+    # Left gate
+    left_gate_x = 0
+    left_gate_rect = Rect(left_gate_x, main_road_y - gate_height//2, gate_width, gate_height)
+    
+    # Gate structure - yellow archway
+    gate_color = (255, 215, 0)  # Gold/Yellow
+    gate_dark = (200, 170, 0)  # Darker yellow
+    gate_light = (255, 235, 100)  # Lighter yellow
+    
+    # Left pillar
+    pygame.draw.rect(surface, gate_color, Rect(left_gate_x, main_road_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(left_gate_x + 3, main_road_y - gate_height//2, 12, gate_height))
+    pygame.draw.rect(surface, gate_dark, Rect(left_gate_x, main_road_y - gate_height//2, 18, gate_height//3))
+    
+    # Right pillar
+    pygame.draw.rect(surface, gate_color, Rect(left_gate_x + gate_width - 18, main_road_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(left_gate_x + gate_width - 15, main_road_y - gate_height//2, 12, gate_height))
+    pygame.draw.rect(surface, gate_dark, Rect(left_gate_x + gate_width - 18, main_road_y - gate_height//2, 18, gate_height//3))
+    
+    # Arch top
+    arch_top = main_road_y - gate_height//2
+    pygame.draw.arc(surface, gate_color, Rect(left_gate_x, arch_top - 20, gate_width, 40), 0, 3.14, 12)
+    pygame.draw.arc(surface, gate_dark, Rect(left_gate_x + 2, arch_top - 18, gate_width - 4, 36), 0, 3.14, 8)
+    
+    # Gate sign
+    sign_text = FONT.render("EXIT", True, BLACK)
+    sign_bg = Rect(left_gate_x + gate_width//2 - sign_text.get_width()//2 - 5, arch_top - 8, 
+                  sign_text.get_width() + 10, sign_text.get_height() + 6)
+    pygame.draw.rect(surface, WHITE, sign_bg, border_radius=3)
+    pygame.draw.rect(surface, BLACK, sign_bg, 2, border_radius=3)
+    surface.blit(sign_text, (left_gate_x + gate_width//2 - sign_text.get_width()//2, arch_top - 5))
+    
+    # Right gate
+    right_gate_x = MAP_W - gate_width
+    right_gate_rect = Rect(right_gate_x, main_road_y - gate_height//2, gate_width, gate_height)
+    
+    # Right gate structure
+    pygame.draw.rect(surface, gate_color, Rect(right_gate_x, main_road_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(right_gate_x + 3, main_road_y - gate_height//2, 12, gate_height))
+    pygame.draw.rect(surface, gate_dark, Rect(right_gate_x, main_road_y - gate_height//2, 18, gate_height//3))
+    
+    pygame.draw.rect(surface, gate_color, Rect(right_gate_x + gate_width - 18, main_road_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(right_gate_x + gate_width - 15, main_road_y - gate_height//2, 12, gate_height))
+    pygame.draw.rect(surface, gate_dark, Rect(right_gate_x + gate_width - 18, main_road_y - gate_height//2, 18, gate_height//3))
+    
+    pygame.draw.arc(surface, gate_color, Rect(right_gate_x, arch_top - 20, gate_width, 40), 0, 3.14, 12)
+    pygame.draw.arc(surface, gate_dark, Rect(right_gate_x + 2, arch_top - 18, gate_width - 4, 36), 0, 3.14, 8)
+    
+    sign_text2 = FONT.render("EXIT", True, BLACK)
+    sign_bg2 = Rect(right_gate_x + gate_width//2 - sign_text2.get_width()//2 - 5, arch_top - 8, 
+                   sign_text2.get_width() + 10, sign_text2.get_height() + 6)
+    pygame.draw.rect(surface, WHITE, sign_bg2, border_radius=3)
+    pygame.draw.rect(surface, BLACK, sign_bg2, 2, border_radius=3)
+    surface.blit(sign_text2, (right_gate_x + gate_width//2 - sign_text2.get_width()//2, arch_top - 5))
+    
+    return left_gate_rect, right_gate_rect
+
+
+def update_city_player(keys):
+    """Update player movement in city view - restricted to city road."""
+    road_y = SCREEN_H - 100
+    road_center_y = road_y + 50  # Center of the road
+    
+    dx = dy = 0
+    if keys[pygame.K_LEFT]: dx -= 1
+    if keys[pygame.K_RIGHT]: dx += 1
+    if keys[pygame.K_UP]: dy -= 1
+    if keys[pygame.K_DOWN]: dy += 1
+    
+    if dx or dy:
+        length = max(1, (dx*dx + dy*dy) ** 0.5)
+        vx = (dx/length) * state.speed
+        vy = (dy/length) * state.speed
+        
+        # New position
+        new_x = state.city_player_x + vx
+        new_y = state.city_player_y + vy
+        
+        # Allow movement to edges (including gates) - allow reaching gate areas
+        new_x = clamp(new_x, -50, SCREEN_W + 50)
+        
+        # Keep player on the road (center Y should be near road center)
+        road_margin = 20  # Allow some vertical movement on road
+        if abs(new_y - road_center_y) < road_margin:
+            state.city_player_x = new_x
+            state.city_player_y = new_y
+        else:
+            # Only allow horizontal movement if trying to go off road
+            state.city_player_x = new_x
+            # Snap back to road center
+            if new_y < road_center_y - road_margin:
+                state.city_player_y = road_center_y - road_margin
+            elif new_y > road_center_y + road_margin:
+                state.city_player_y = road_center_y + road_margin
+
+
+def check_city_gate_collision():
+    """Check if player collides with city gate to return to campus."""
+    if not state.show_city_view:
+        return
+    
+    px = state.city_player_x
+    
+    # SIMPLE: If player is near edges, return to campus
+    # Left edge: px < 250, Right edge: px > 950 (SCREEN_W is 1200)
+    if px < 250 or px > 950:
+        # IMMEDIATELY return to campus
+        state.show_city_view = False
+        state.transition_alpha = 255
+        toast("Returning to campus...")
+        
+        # Set campus player position
+        if px < SCREEN_W // 2:
+            player_rect.x = 50  # Left gate
+        else:
+            player_rect.x = MAP_W - 50  # Right gate
+        player_rect.y = MAP_H // 2 - PLAYER_SIZE // 2
+        
+        # Reset for next city visit
+        state.city_player_x = 600
+        state.city_player_y = 525
+
+
+def draw_city_gates(surface: pygame.Surface):
+    """Draw yellow gates at the edges of city road for returning to campus."""
+    road_y = SCREEN_H - 100
+    road_center_y = road_y + 50
+    gate_width = 100
+    gate_height = 80
+    
+    gate_color = (255, 215, 0)  # Yellow/Gold
+    gate_dark = (200, 170, 0)
+    gate_light = (255, 235, 100)
+    
+    # Left gate
+    left_gate_x = 0
+    pygame.draw.rect(surface, gate_color, Rect(left_gate_x, road_center_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(left_gate_x + 3, road_center_y - gate_height//2, 12, gate_height))
+    pygame.draw.rect(surface, gate_color, Rect(left_gate_x + gate_width - 18, road_center_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(left_gate_x + gate_width - 15, road_center_y - gate_height//2, 12, gate_height))
+    
+    arch_top = road_center_y - gate_height//2
+    pygame.draw.arc(surface, gate_color, Rect(left_gate_x, arch_top - 15, gate_width, 30), 0, 3.14, 10)
+    
+    sign_text = FONT_SM.render("CAMPUS", True, BLACK)
+    sign_bg = Rect(left_gate_x + gate_width//2 - sign_text.get_width()//2 - 5, arch_top - 5, 
+                  sign_text.get_width() + 10, sign_text.get_height() + 4)
+    pygame.draw.rect(surface, WHITE, sign_bg, border_radius=3)
+    pygame.draw.rect(surface, BLACK, sign_bg, 2, border_radius=3)
+    surface.blit(sign_text, (left_gate_x + gate_width//2 - sign_text.get_width()//2, arch_top - 3))
+    
+    # Right gate
+    right_gate_x = SCREEN_W - gate_width
+    pygame.draw.rect(surface, gate_color, Rect(right_gate_x, road_center_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(right_gate_x + 3, road_center_y - gate_height//2, 12, gate_height))
+    pygame.draw.rect(surface, gate_color, Rect(right_gate_x + gate_width - 18, road_center_y - gate_height//2, 18, gate_height))
+    pygame.draw.rect(surface, gate_light, Rect(right_gate_x + gate_width - 15, road_center_y - gate_height//2, 12, gate_height))
+    
+    pygame.draw.arc(surface, gate_color, Rect(right_gate_x, arch_top - 15, gate_width, 30), 0, 3.14, 10)
+    
+    sign_text2 = FONT_SM.render("CAMPUS", True, BLACK)
+    sign_bg2 = Rect(right_gate_x + gate_width//2 - sign_text2.get_width()//2 - 5, arch_top - 5, 
+                   sign_text2.get_width() + 10, sign_text2.get_height() + 4)
+    pygame.draw.rect(surface, WHITE, sign_bg2, border_radius=3)
+    pygame.draw.rect(surface, BLACK, sign_bg2, 2, border_radius=3)
+    surface.blit(sign_text2, (right_gate_x + gate_width//2 - sign_text2.get_width()//2, arch_top - 3))
+
+
+def draw_city_player(surface: pygame.Surface):
+    """Draw player sprite in city view."""
+    px, py = state.city_player_x, state.city_player_y
+    size = PLAYER_SIZE
+    
+    # Shadow
+    shadow_rect = Rect(px - size//2 + 2, py + size//2 - 1, size - 4, 5)
+    shadow_surf = pygame.Surface((size, 5), pygame.SRCALPHA)
+    for i in range(5):
+        alpha = max(0, 50 - i * 10)
+        shadow_surf.fill((0, 0, 0, alpha), Rect(0, i, size, 1))
+    surface.blit(shadow_surf, (shadow_rect.x, shadow_rect.y))
+    
+    # Head
+    head_radius = 8
+    head_y = py - size // 2 + head_radius + 3
+    pygame.draw.circle(surface, (255, 220, 177), (px, head_y), head_radius)
+    pygame.draw.circle(surface, (240, 200, 157), (px - 2, head_y - 1), head_radius - 1)
+    pygame.draw.circle(surface, (200, 180, 150), (px, head_y), head_radius, 1)
+    
+    # Hair
+    hair_color = (50, 30, 15)
+    hair_light = (70, 45, 25)
+    hair_rect = Rect(px - head_radius + 1, head_y - head_radius - 3, 
+                     head_radius * 2 - 2, head_radius + 3)
+    pygame.draw.ellipse(surface, hair_color, hair_rect)
+    pygame.draw.ellipse(surface, hair_light, Rect(px - head_radius + 2, head_y - head_radius - 2, 
+                                                  head_radius * 2 - 4, head_radius))
+    
+    # Neck
+    neck_rect = Rect(px - 2, head_y + head_radius - 1, 4, 3)
+    pygame.draw.rect(surface, (255, 220, 177), neck_rect)
+    
+    # Body
+    body_top = head_y + head_radius + 2
+    body_height = 10
+    body_width = 10
+    body_rect = Rect(px - body_width//2, body_top, body_width, body_height)
+    shirt_color = (40, 90, 180)
+    shirt_dark = (25, 60, 140)
+    shirt_light = (60, 120, 220)
+    pygame.draw.rect(surface, shirt_color, body_rect, border_radius=2)
+    pygame.draw.rect(surface, shirt_dark, Rect(body_rect.x, body_rect.y, body_rect.w, body_rect.h//2), border_radius=2)
+    pygame.draw.line(surface, shirt_light, (body_rect.x + 1, body_rect.y + body_rect.h//2), 
+                    (body_rect.x + body_rect.w - 1, body_rect.y + body_rect.h//2), 1)
+    pygame.draw.rect(surface, (20, 50, 120), body_rect, 1, border_radius=2)
+    
+    # Arms
+    arm_width = 3
+    arm_length = 8
+    arm_y = body_top + 1
+    left_arm_rect = Rect(px - body_width//2 - arm_width, arm_y, arm_width, arm_length)
+    pygame.draw.rect(surface, (255, 220, 177), left_arm_rect, border_radius=1)
+    pygame.draw.rect(surface, (240, 200, 157), Rect(left_arm_rect.x, left_arm_rect.y, arm_width, arm_length//2))
+    right_arm_rect = Rect(px + body_width//2, arm_y, arm_width, arm_length)
+    pygame.draw.rect(surface, (255, 220, 177), right_arm_rect, border_radius=1)
+    pygame.draw.rect(surface, (240, 200, 157), Rect(right_arm_rect.x, right_arm_rect.y, arm_width, arm_length//2))
+    
+    # Hands
+    hand_size = 2
+    pygame.draw.circle(surface, (255, 220, 177), (px - body_width//2 - arm_width//2, arm_y + arm_length), hand_size)
+    pygame.draw.circle(surface, (255, 220, 177), (px + body_width//2 + arm_width//2, arm_y + arm_length), hand_size)
+    
+    # Legs
+    leg_top = body_top + body_height
+    leg_width = 4
+    leg_height = 9
+    pants_color = (35, 35, 45)
+    pants_dark = (25, 25, 35)
+    left_leg_rect = Rect(px - leg_width - 1, leg_top, leg_width, leg_height)
+    pygame.draw.rect(surface, pants_color, left_leg_rect, border_radius=1)
+    pygame.draw.rect(surface, pants_dark, Rect(left_leg_rect.x, left_leg_rect.y, leg_width, leg_height//2))
+    right_leg_rect = Rect(px + 1, leg_top, leg_width, leg_height)
+    pygame.draw.rect(surface, pants_color, right_leg_rect, border_radius=1)
+    pygame.draw.rect(surface, pants_dark, Rect(right_leg_rect.x, right_leg_rect.y, leg_width, leg_height//2))
+    
+    # Feet
+    foot_y = leg_top + leg_height
+    foot_width = 5
+    foot_height = 3
+    shoe_color = (15, 15, 15)
+    shoe_sole = (25, 25, 25)
+    foot_rect_l = Rect(px - foot_width - 1, foot_y, foot_width, foot_height)
+    pygame.draw.rect(surface, shoe_color, foot_rect_l, border_radius=1)
+    pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_l.x, foot_rect_l.y + foot_height - 1, foot_width, 1))
+    foot_rect_r = Rect(px + 1, foot_y, foot_width, foot_height)
+    pygame.draw.rect(surface, shoe_color, foot_rect_r, border_radius=1)
+    pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_r.x, foot_rect_r.y + foot_height - 1, foot_width, 1))
+    
+    # Face
+    eye_y = head_y - 2
+    eye_size = 2
+    pygame.draw.circle(surface, (255, 255, 255), (px - 3, eye_y), eye_size)
+    pygame.draw.circle(surface, (0, 0, 0), (px - 3, eye_y), 1)
+    pygame.draw.circle(surface, (255, 255, 255), (px + 3, eye_y), eye_size)
+    pygame.draw.circle(surface, (0, 0, 0), (px + 3, eye_y), 1)
+    pygame.draw.circle(surface, (240, 200, 157), (px, head_y + 1), 1)
+    pygame.draw.arc(surface, (180, 100, 100), Rect(px - 3, head_y + 2, 6, 3), 0, 3.14, 1)
+
+
+def draw_city_view(surface: pygame.Surface):
+    """Draw city view with named buildings and moving cars when player reaches gate."""
+    # Update car positions for animation
+    if state.show_city_view:
+        for i in range(len(state.city_car_positions)):
+            state.city_car_positions[i] += 2  # Move cars to the right
+            if state.city_car_positions[i] > SCREEN_W + 100:
+                state.city_car_positions[i] = -100  # Reset to left side
+    
+    # Sky gradient
+    for y in range(SCREEN_H):
+        sky_color = (135 - y//8, 206 - y//8, 250 - y//8)
+        pygame.draw.line(surface, sky_color, (0, y), (SCREEN_W, y))
+    
+    # City buildings with names
+    buildings_data = [
+        {'name': 'Geda Hotel', 'x': 50, 'color': (100, 80, 80), 'height': 240, 'width': 100},
+        {'name': 'Stationary', 'x': 180, 'color': (80, 100, 80), 'height': 200, 'width': 90},
+        {'name': 'Supermarket', 'x': 300, 'color': (80, 80, 100), 'height': 220, 'width': 110},
+    ]
+    
+    for building in buildings_data:
+        building_rect = Rect(building['x'], SCREEN_H - building['height'], building['width'], building['height'])
+        # Building body
+        pygame.draw.rect(surface, building['color'], building_rect)
+        # Building border
+        pygame.draw.rect(surface, (60, 60, 60), building_rect, 2)
+        
+        # Windows
+        for wy in range(building_rect.top + 25, building_rect.bottom - 35, 30):
+            for wx in range(building_rect.left + 10, building_rect.right - 10, 25):
+                if random.random() > 0.3:  # Some windows lit
+                    window_color = (255, 255, 200) if random.random() > 0.5 else (200, 200, 150)
+                    pygame.draw.rect(surface, window_color, Rect(wx, wy, 15, 20))
+        
+        # Building name sign
+        name_text = FONT_SM.render(building['name'], True, WHITE)
+        name_bg = Rect(building_rect.centerx - name_text.get_width()//2 - 5, 
+                      building_rect.bottom - 30, name_text.get_width() + 10, name_text.get_height() + 4)
+        pygame.draw.rect(surface, (0, 0, 0, 200), name_bg, border_radius=3)
+        pygame.draw.rect(surface, WHITE, name_bg, 1, border_radius=3)
+        surface.blit(name_text, (building_rect.centerx - name_text.get_width()//2, building_rect.bottom - 28))
+    
+    # More buildings on right side
+    building_x = SCREEN_W - 350
+    building_colors = [(90, 90, 110), (70, 70, 90), (60, 60, 80)]
+    for i, color in enumerate(building_colors):
+        height = 180 + i * 50
+        width = 70 + i * 15
+        building_rect = Rect(building_x, SCREEN_H - height, width, height)
+        pygame.draw.rect(surface, color, building_rect)
+        pygame.draw.rect(surface, (60, 60, 60), building_rect, 2)
+        # Windows
+        for wy in range(building_rect.top + 20, building_rect.bottom - 10, 30):
+            for wx in range(building_rect.left + 10, building_rect.right - 10, 25):
+                if random.random() > 0.3:
+                    window_color = (255, 255, 200) if random.random() > 0.5 else (200, 200, 150)
+                    pygame.draw.rect(surface, window_color, Rect(wx, wy, 15, 20))
+        building_x += width + 25
+    
+    # Road in city
+    road_y = SCREEN_H - 100
+    road_rect = Rect(0, road_y, SCREEN_W, 100)
+    pygame.draw.rect(surface, ASPHALT, road_rect)
+    
+    # Road center line (moving for animation effect)
+    dash_length = 30
+    dash_gap = 20
+    offset = (pygame.time.get_ticks() // 20) % (dash_length + dash_gap)
+    x = -offset
+    while x < SCREEN_W:
+        pygame.draw.line(surface, ROAD_LINE, (x, road_y + 50), (x + dash_length, road_y + 50), 4)
+        x += dash_length + dash_gap
+    
+    # Draw gates on the road
+    draw_city_gates(surface)
+    
+    # Moving cars on the road
+    car_colors = [(200, 50, 50), (50, 50, 200), (50, 150, 50), (200, 150, 50), (150, 50, 200)]
+    for i, car_x in enumerate(state.city_car_positions[:5]):
+        if -100 <= car_x <= SCREEN_W + 100:  # Only draw if visible
+            car_y = road_y + 25 + (i % 2) * 35
+            car_color = car_colors[i % len(car_colors)]
+            # Car body
+            car_rect = Rect(car_x, car_y, 60, 30)
+            pygame.draw.rect(surface, car_color, car_rect, border_radius=5)
+            # Car windows
+            pygame.draw.rect(surface, (100, 150, 200), Rect(car_x + 5, car_y + 5, 50, 20), border_radius=3)
+            # Car wheels
+            pygame.draw.circle(surface, (30, 30, 30), (car_x + 12, car_y + 30), 8)
+            pygame.draw.circle(surface, (30, 30, 30), (car_x + 48, car_y + 30), 8)
+            # Wheel highlights
+            pygame.draw.circle(surface, (60, 60, 60), (car_x + 12, car_y + 30), 5)
+            pygame.draw.circle(surface, (60, 60, 60), (car_x + 48, car_y + 30), 5)
+    
+    # Draw player in city
+    draw_city_player(surface)
+    
+    # Show hint when player is near a gate
+    px, py = state.city_player_x, state.city_player_y
+    road_center_y = SCREEN_H - 50
+    near_left = px < 150 and abs(py - road_center_y) < 60
+    near_right = px > SCREEN_W - 150 and abs(py - road_center_y) < 60
+    
+    if near_left or near_right:
+        hint_text = FONT_SM.render("Returning to campus...", True, WHITE)
+        hint_bg = Rect(px - hint_text.get_width()//2 - 10, py - 40, 
+                      hint_text.get_width() + 20, hint_text.get_height() + 8)
+        pygame.draw.rect(surface, (0, 0, 0, 220), hint_bg, border_radius=6)
+        pygame.draw.rect(surface, (255, 215, 0), hint_bg, 2, border_radius=6)
+        surface.blit(hint_text, (px - hint_text.get_width()//2, py - 36))
+    
+    # Title text
+    title_text = FONT_LG.render("Welcome to the City!", True, WHITE)
+    title_bg = Rect(SCREEN_W//2 - title_text.get_width()//2 - 20, 50, 
+                   title_text.get_width() + 40, title_text.get_height() + 20)
+    pygame.draw.rect(surface, (0, 0, 0, 180), title_bg, border_radius=10)
+    surface.blit(title_text, (SCREEN_W//2 - title_text.get_width()//2, 60))
+    
+    # Instructions
+    return_text = FONT_SM.render("Walk to gate to return to campus", True, WHITE)
+    return_bg = Rect(SCREEN_W//2 - return_text.get_width()//2 - 20, SCREEN_H - 40, 
+                    return_text.get_width() + 40, return_text.get_height() + 10)
+    pygame.draw.rect(surface, (0, 0, 0, 180), return_bg, border_radius=8)
+    surface.blit(return_text, (SCREEN_W//2 - return_text.get_width()//2, SCREEN_H - 35))
+
+
 def draw_paths(surface: pygame.Surface):
-    # main path lines
-    pygame.draw.rect(surface, PATH, Rect(100, 260, 680, 40))
-    pygame.draw.rect(surface, PATH, Rect(220, 120, 40, 300))
-    pygame.draw.rect(surface, PATH, Rect(620, 120, 40, 300))
+    """Draw realistic asphalt roads with white center lines."""
+    road_width = 50  # Width of main roads
+    side_road_width = 40  # Width of roads connecting to buildings
+    
+    # Main horizontal road from left to right edge (through the middle)
+    main_road_y = MAP_H // 2  # Center vertically
+    main_road_rect = Rect(0, main_road_y - road_width//2, MAP_W, road_width)
+    
+    # Draw main road asphalt
+    pygame.draw.rect(surface, ASPHALT, main_road_rect)
+    # Road edge lines
+    pygame.draw.line(surface, ROAD_EDGE, (0, main_road_rect.top), (MAP_W, main_road_rect.top), 2)
+    pygame.draw.line(surface, ROAD_EDGE, (0, main_road_rect.bottom), (MAP_W, main_road_rect.bottom), 2)
+    
+    # White center line (dashed) on main road
+    dash_length = 20
+    dash_gap = 15
+    center_y = main_road_y
+    x = 0
+    while x < MAP_W:
+        pygame.draw.line(surface, ROAD_LINE, (x, center_y), (x + dash_length, center_y), 3)
+        x += dash_length + dash_gap
+    
+    # Vertical roads connecting to buildings
+    for b in buildings:
+        building_rect = b['rect']
+        # Determine gate position (center bottom of building - where door is)
+        gate_x = building_rect.centerx
+        gate_y = building_rect.bottom
+        
+        # Calculate road start position (where it meets the main road)
+        road_start_x = gate_x
+        road_start_y = main_road_y
+        
+        # Determine if building is above or below main road
+        if gate_y < main_road_y:
+            # Building is above main road - road goes up from main road to building gate
+            road_top = gate_y
+            road_bottom = main_road_y
+            road_rect = Rect(road_start_x - side_road_width//2, road_top, 
+                           side_road_width, road_bottom - road_top)
+        else:
+            # Building is below main road - road goes down from main road to building gate
+            road_top = main_road_y
+            road_bottom = gate_y
+            road_rect = Rect(road_start_x - side_road_width//2, road_top, 
+                           side_road_width, road_bottom - road_top)
+        
+        # Draw vertical road asphalt (only if road has height)
+        if road_rect.height > 0:
+            pygame.draw.rect(surface, ASPHALT, road_rect)
+            # Road edge lines
+            pygame.draw.line(surface, ROAD_EDGE, (road_rect.left, road_rect.top), 
+                            (road_rect.left, road_rect.bottom), 2)
+            pygame.draw.line(surface, ROAD_EDGE, (road_rect.right, road_rect.top), 
+                            (road_rect.right, road_rect.bottom), 2)
+            
+            # White center line (dashed) on vertical roads
+            center_x = road_start_x
+            y = road_rect.top
+            while y < road_rect.bottom:
+                end_y = min(y + dash_length, road_rect.bottom)
+                pygame.draw.line(surface, ROAD_LINE, (center_x, y), (center_x, end_y), 3)
+                y += dash_length + dash_gap
+    
+    # Add some texture/shading to roads for realism
+    # Subtle darker patches on asphalt
+    for i in range(0, MAP_W, 30):
+        for j in range(main_road_rect.top, main_road_rect.bottom, 30):
+            if (i + j) % 60 == 0:
+                pygame.draw.circle(surface, ASPHALT_DARK, (i, j), 3)
+    
+    # Draw intersection markings (stop lines) where vertical roads meet main road
+    for b in buildings:
+        building_rect = b['rect']
+        gate_x = building_rect.centerx
+        stop_line_width = 30
+        stop_line_thickness = 4
+        # Stop line on vertical road before main road
+        pygame.draw.line(surface, ROAD_LINE, 
+                        (gate_x - stop_line_width//2, main_road_y - stop_line_thickness//2),
+                        (gate_x + stop_line_width//2, main_road_y - stop_line_thickness//2), 
+                        stop_line_thickness)
+        pygame.draw.line(surface, ROAD_LINE, 
+                        (gate_x - stop_line_width//2, main_road_y + stop_line_thickness//2),
+                        (gate_x + stop_line_width//2, main_road_y + stop_line_thickness//2), 
+                        stop_line_thickness)
 
 
 def draw_trees(surface: pygame.Surface):
@@ -194,6 +709,7 @@ def draw_building(surface: pygame.Surface, b):
 def draw_map(surface: pygame.Surface):
     draw_grass(surface)
     draw_paths(surface)
+    draw_gates(surface)  # Draw gates at road edges
     for b in buildings:
         draw_building(surface, b)
     draw_trees(surface)
@@ -452,21 +968,101 @@ def update_player(keys):
         length = max(1, (dx*dx + dy*dy) ** 0.5)
         vx = (dx/length) * state.speed
         vy = (dy/length) * state.speed
-        player_rect.x = clamp(player_rect.x + vx, 0, MAP_W - PLAYER_SIZE)
-        player_rect.y = clamp(player_rect.y + vy, 0, MAP_H - PLAYER_SIZE)
+        
+        # Try to move - only allow if new position is on road
+        new_x = player_rect.x + vx
+        new_y = player_rect.y + vy
+        
+        # Clamp to map boundaries first
+        new_x = clamp(new_x, 0, MAP_W - PLAYER_SIZE)
+        new_y = clamp(new_y, 0, MAP_H - PLAYER_SIZE)
+        
+        # Create temporary rect to check if new position is on road
+        temp_rect = Rect(new_x, new_y, PLAYER_SIZE, PLAYER_SIZE)
+        if is_player_on_road(temp_rect):
+            player_rect.x = new_x
+            player_rect.y = new_y
+        else:
+            # Try moving only horizontally or vertically if diagonal movement fails
+            temp_rect_x = Rect(new_x, player_rect.y, PLAYER_SIZE, PLAYER_SIZE)
+            temp_rect_y = Rect(player_rect.x, new_y, PLAYER_SIZE, PLAYER_SIZE)
+            if is_player_on_road(temp_rect_x):
+                player_rect.x = new_x
+            elif is_player_on_road(temp_rect_y):
+                player_rect.y = new_y
+
+
+def check_gate_collision():
+    """Check if player collides with gate and show city view."""
+    main_road_y = MAP_H // 2
+    gate_width = 100  # Updated to match new gate size
+    gate_height = 120  # Updated to match new gate size
+    
+    # Left gate
+    left_gate_rect = Rect(0, main_road_y - gate_height//2, gate_width, gate_height)
+    # Right gate
+    right_gate_rect = Rect(MAP_W - gate_width, main_road_y - gate_height//2, gate_width, gate_height)
+    
+    # Check collision with gates (using center point for better detection)
+    px, py = player_rect.centerx, player_rect.centery
+    if (left_gate_rect.collidepoint(px, py) or right_gate_rect.collidepoint(px, py)):
+        if not state.show_city_view:
+            state.show_city_view = True
+            state.transition_alpha = 0  # Start transition
+            toast("Entering the city...")
+            # Set city player position based on which gate was used
+            road_center_y = SCREEN_H - 50  # City road center Y
+            if left_gate_rect.collidepoint(px, py):  # Left gate
+                state.city_player_x = 150  # Start near left gate
+            else:  # Right gate
+                state.city_player_x = SCREEN_W - 150  # Start near right gate
+            state.city_player_y = road_center_y  # On the road
 
 
 def render():
+    # Handle smooth transition
+    if state.show_city_view:
+        # Fade in city view
+        if state.transition_alpha < 255:
+            state.transition_alpha = min(255, state.transition_alpha + 15)  # Fade in speed
+        
+        SCREEN.fill((0, 0, 0))
+        draw_city_view(SCREEN)
+        
+        # Apply fade transition overlay
+        if state.transition_alpha < 255:
+            fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+            fade_overlay.fill((0, 0, 0, 255 - state.transition_alpha))
+            SCREEN.blit(fade_overlay, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
+        return
+    
+    # Campus view - fade out transition overlay when returning
+    if state.transition_alpha > 0:
+        state.transition_alpha = max(0, state.transition_alpha - 20)  # Faster fade out speed
+    
+    # Clear screen completely first
+    SCREEN.fill(BG_TOP)
+    
+    # Draw campus map
     MAP_SURF.fill((0,0,0,0))
     draw_map(MAP_SURF)
     draw_player(MAP_SURF)
 
+    # Draw HUD
     HUD_SURF.fill((0,0,0,0))
     draw_hud(HUD_SURF)
 
-    # blit map and hud
+    # Blit map and hud to screen
     SCREEN.blit(MAP_SURF, (12, 20))
     SCREEN.blit(HUD_SURF, (12 + MAP_W + 20, 20))
+    
+    # Apply fade transition overlay when returning to campus (fades from black to campus)
+    # Only show overlay if there's actually a transition happening
+    if state.transition_alpha > 0:
+        fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H))
+        fade_overlay.fill((0, 0, 0))
+        fade_overlay.set_alpha(state.transition_alpha)
+        SCREEN.blit(fade_overlay, (0, 0))
 
     # interact hint
     if current_overlap and not state.popup_open:
@@ -527,7 +1123,11 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    if state.popup_open:
+                    if state.show_city_view:
+                        state.transition_alpha = 255  # Start fade out
+                        state.show_city_view = False
+                        toast("Returning to campus...")
+                    elif state.popup_open:
                         close_popup()
                 if event.key == pygame.K_e:
                     if current_overlap and not state.popup_open:
@@ -536,7 +1136,12 @@ def main():
                 handle_mouse(event)
 
         keys = pygame.key.get_pressed()
-        update_player(keys)
+        if state.show_city_view:
+            update_city_player(keys)
+            check_city_gate_collision()
+        else:
+            update_player(keys)
+            check_gate_collision()
 
         ov = check_overlap()
         if ov is None:

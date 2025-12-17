@@ -1,7 +1,12 @@
+from .consts import MAP_H
+
 class GameState:
     def __init__(self):
+        # Start player on main road (center of map vertically)
+        # MAP_H = 560, so main road is at y = 280
+        # PLAYER_SIZE = 22 (defined in main.py), so center player at y = 280 - 11 = 269
         self.x = 100
-        self.y = 470
+        self.y = 269  # Center on main road
         self.speed = 3
         self.energy = 80
         self.xp = 0
@@ -39,6 +44,11 @@ class GameState:
         self.popup_open = False
         self.suppress_until_exit = False
         self.victory_awarded = False
+        self.show_city_view = False
+        self.transition_alpha = 0
+        self.city_car_positions = [100, 300, 500, 700, 900]  # Initial car positions
+        self.city_player_x = 600  # Start player in center of city road (SCREEN_W/2 = 600)
+        self.city_player_y = 525  # On the city road (SCREEN_H - 75 = 525)
 
     def reset(self):
         self.__init__()
