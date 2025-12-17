@@ -75,39 +75,120 @@ def draw_paths(surface: pygame.Surface):
 
 def draw_trees(surface: pygame.Surface):
     for (tx, ty) in TREE_POS:
-        pygame.draw.circle(surface, (22, 101, 52), (tx, ty), 7)
-        pygame.draw.circle(surface, (34, 197, 94), (tx, ty), 5)
-        pygame.draw.rect(surface, (100, 67, 33), Rect(tx-1, ty+3, 2, 6))
+        # Trunk - more realistic brown with texture
+        trunk_color = (101, 67, 33)
+        trunk_dark = (80, 50, 25)
+        trunk_rect = Rect(tx-2, ty+6, 4, 10)
+        pygame.draw.rect(surface, trunk_color, trunk_rect)
+        pygame.draw.line(surface, trunk_dark, (tx, ty+6), (tx, ty+16), 1)
+        
+        # Foliage - layered circles for depth
+        # Bottom layer (darker, larger)
+        pygame.draw.circle(surface, (15, 80, 40), (tx, ty-2), 9)
+        # Middle layer
+        pygame.draw.circle(surface, (22, 101, 52), (tx-3, ty-4), 7)
+        pygame.draw.circle(surface, (22, 101, 52), (tx+3, ty-4), 7)
+        # Top layer (lighter, smaller)
+        pygame.draw.circle(surface, (34, 197, 94), (tx, ty-6), 6)
+        # Highlights
+        pygame.draw.circle(surface, (56, 211, 106), (tx-2, ty-5), 4)
+        pygame.draw.circle(surface, (56, 211, 106), (tx+2, ty-5), 4)
 
 
 def draw_building(surface: pygame.Surface, b):
     rect = b['rect']
     color = color_for(b['key'])
-    # body
-    pygame.draw.rect(surface, color, rect, border_radius=10)
-    pygame.draw.rect(surface, (17,24,39), rect, width=2, border_radius=10)
-    # roof cap
-    pygame.draw.rect(surface, (17,24,39), Rect(rect.x, rect.y-6, rect.w, 6))
-    # door
-    door_w, door_h = 28, 36
+    
+    # Building shadow for depth
+    shadow_offset = 3
+    shadow_rect = Rect(rect.x + shadow_offset, rect.y + shadow_offset, rect.w, rect.h)
+    shadow_surf = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+    shadow_surf.fill((0, 0, 0, 40))
+    surface.blit(shadow_surf, (shadow_rect.x, shadow_rect.y))
+    
+    # Main building body with texture effect
+    pygame.draw.rect(surface, color, rect, border_radius=8)
+    # Add subtle texture lines
+    for i in range(rect.y + 15, rect.y + rect.h - 15, 8):
+        pygame.draw.line(surface, tuple(max(0, c-15) for c in color), (rect.x+2, i), (rect.x+rect.w-2, i), 1)
+    
+    # Building border
+    pygame.draw.rect(surface, (17,24,39), rect, width=2, border_radius=8)
+    
+    # Realistic roof with shingles
+    roof_height = 12
+    roof_rect = Rect(rect.x-2, rect.y-roof_height, rect.w+4, roof_height)
+    roof_color = (40, 30, 20)  # Dark brown shingles
+    pygame.draw.polygon(surface, roof_color, [
+        (rect.x-2, rect.y),
+        (rect.x + rect.w//2, rect.y - roof_height - 2),
+        (rect.x + rect.w + 2, rect.y)
+    ])
+    # Roof shingle lines
+    for i in range(0, roof_height, 3):
+        y_offset = rect.y - i
+        x1 = rect.x - 2 + (i * 2)
+        x2 = rect.x + rect.w + 2 - (i * 2)
+        if x1 < x2:
+            pygame.draw.line(surface, (30, 20, 15), (x1, y_offset), (x2, y_offset), 1)
+    
+    # Realistic door with frame and handle
+    door_w, door_h = 32, 42
     door_x = rect.x + rect.w//2 - door_w//2
-    door_y = rect.y + rect.h - door_h - 8
-    pygame.draw.rect(surface, DOOR, Rect(door_x, door_y, door_w, door_h), border_radius=4)
-    pygame.draw.rect(surface, (255,255,255,120), Rect(door_x, door_y, door_w, door_h), 1, border_radius=4)
-    # windows grid
-    grid_rect = Rect(rect.x+10, rect.y+10, rect.w-20, rect.h-30)
-    cols = max(2, rect.w // 40)
-    rows = max(2, rect.h // 40)
+    door_y = rect.y + rect.h - door_h - 10
+    
+    # Door frame
+    frame_thickness = 3
+    frame_rect = Rect(door_x - frame_thickness, door_y - frame_thickness, 
+                      door_w + frame_thickness*2, door_h + frame_thickness*2)
+    pygame.draw.rect(surface, (60, 50, 40), frame_rect, border_radius=5)
+    
+    # Door itself
+    door_color = (55, 45, 35)
+    pygame.draw.rect(surface, door_color, Rect(door_x, door_y, door_w, door_h), border_radius=4)
+    # Door panels
+    pygame.draw.rect(surface, (45, 35, 25), Rect(door_x+2, door_y+2, door_w-4, door_h//2-2), border_radius=2)
+    pygame.draw.rect(surface, (45, 35, 25), Rect(door_x+2, door_y+door_h//2, door_w-4, door_h//2-2), border_radius=2)
+    # Door handle
+    handle_x = door_x + door_w - 8
+    handle_y = door_y + door_h//2
+    pygame.draw.circle(surface, (180, 180, 180), (handle_x, handle_y), 3)
+    pygame.draw.circle(surface, (100, 100, 100), (handle_x, handle_y), 2)
+    
+    # Realistic windows with frames and glass
+    grid_rect = Rect(rect.x+12, rect.y+15, rect.w-24, rect.h-50)
+    cols = max(2, rect.w // 45)
+    rows = max(2, rect.h // 45)
     cell_w = grid_rect.w // cols
     cell_h = grid_rect.h // rows
+    
     for r in range(rows):
         for c in range(cols):
-            wx = grid_rect.x + c*cell_w + 6
+            wx = grid_rect.x + c*cell_w + 4
             wy = grid_rect.y + r*cell_h + 4
-            ww, wh = max(18, cell_w-12), max(14, cell_h-10)
+            ww, wh = max(20, cell_w-8), max(18, cell_h-8)
+            
+            # Window frame (outer)
+            frame_color = (80, 70, 60)
+            win_frame = Rect(wx-2, wy-2, ww+4, wh+4)
+            pygame.draw.rect(surface, frame_color, win_frame, border_radius=2)
+            
+            # Window glass with reflection
+            glass_color = (200, 220, 240)
             win_rect = Rect(wx, wy, ww, wh)
-            pygame.draw.rect(surface, (250,250,255), win_rect, border_radius=3)
-            pygame.draw.rect(surface, (17,24,39,30), win_rect, 1, border_radius=3)
+            pygame.draw.rect(surface, glass_color, win_rect, border_radius=2)
+            
+            # Glass reflection highlight
+            highlight = Rect(wx+2, wy+2, ww//2, wh//2)
+            pygame.draw.rect(surface, (240, 250, 255), highlight, border_radius=1)
+            
+            # Window cross (mullions)
+            mid_x, mid_y = wx + ww//2, wy + wh//2
+            pygame.draw.line(surface, frame_color, (wx, mid_y), (wx+ww, mid_y), 2)
+            pygame.draw.line(surface, frame_color, (mid_x, wy), (mid_x, wy+wh), 2)
+            
+            # Window sill
+            pygame.draw.rect(surface, (100, 90, 80), Rect(wx-2, wy+wh, ww+4, 2))
 
 
 def draw_map(surface: pygame.Surface):
@@ -242,8 +323,123 @@ def close_popup():
 
 
 def draw_player(surface: pygame.Surface):
-    pygame.draw.rect(surface, SUCCESS, player_rect, border_radius=6)
-    pygame.draw.rect(surface, WHITE, player_rect, 2, border_radius=6)
+    px, py = player_rect.centerx, player_rect.centery
+    size = PLAYER_SIZE
+    
+    # Enhanced shadow with blur effect
+    shadow_rect = Rect(px - size//2 + 2, py + size//2 - 1, size - 4, 5)
+    shadow_surf = pygame.Surface((size, 5), pygame.SRCALPHA)
+    # Create gradient shadow
+    for i in range(5):
+        alpha = max(0, 50 - i * 10)
+        shadow_surf.fill((0, 0, 0, alpha), Rect(0, i, size, 1))
+    surface.blit(shadow_surf, (shadow_rect.x, shadow_rect.y))
+    
+    # Head with better proportions
+    head_radius = 8
+    head_y = py - size // 2 + head_radius + 3
+    
+    # Head base (skin tone)
+    pygame.draw.circle(surface, (255, 220, 177), (px, head_y), head_radius)
+    # Head shading for depth
+    pygame.draw.circle(surface, (240, 200, 157), (px - 2, head_y - 1), head_radius - 1)
+    pygame.draw.circle(surface, (200, 180, 150), (px, head_y), head_radius, 1)
+    
+    # Hair with texture
+    hair_color = (50, 30, 15)  # Dark brown hair
+    hair_light = (70, 45, 25)
+    hair_rect = Rect(px - head_radius + 1, head_y - head_radius - 3, 
+                     head_radius * 2 - 2, head_radius + 3)
+    pygame.draw.ellipse(surface, hair_color, hair_rect)
+    # Hair highlights
+    pygame.draw.ellipse(surface, hair_light, Rect(px - head_radius + 2, head_y - head_radius - 2, 
+                                                  head_radius * 2 - 4, head_radius))
+    
+    # Neck
+    neck_rect = Rect(px - 2, head_y + head_radius - 1, 4, 3)
+    pygame.draw.rect(surface, (255, 220, 177), neck_rect)
+    
+    # Body (torso) - shirt with better proportions
+    body_top = head_y + head_radius + 2
+    body_height = 10
+    body_width = 10
+    body_rect = Rect(px - body_width//2, body_top, body_width, body_height)
+    
+    # Shirt with shading
+    shirt_color = (40, 90, 180)  # Blue shirt
+    shirt_dark = (25, 60, 140)
+    shirt_light = (60, 120, 220)
+    pygame.draw.rect(surface, shirt_color, body_rect, border_radius=2)
+    # Shirt shading
+    pygame.draw.rect(surface, shirt_dark, Rect(body_rect.x, body_rect.y, body_rect.w, body_rect.h//2), border_radius=2)
+    pygame.draw.line(surface, shirt_light, (body_rect.x + 1, body_rect.y + body_rect.h//2), 
+                    (body_rect.x + body_rect.w - 1, body_rect.y + body_rect.h//2), 1)
+    pygame.draw.rect(surface, (20, 50, 120), body_rect, 1, border_radius=2)
+    
+    # Arms with better positioning and shading
+    arm_width = 3
+    arm_length = 8
+    arm_y = body_top + 1
+    # Left arm
+    left_arm_rect = Rect(px - body_width//2 - arm_width, arm_y, arm_width, arm_length)
+    pygame.draw.rect(surface, (255, 220, 177), left_arm_rect, border_radius=1)
+    pygame.draw.rect(surface, (240, 200, 157), Rect(left_arm_rect.x, left_arm_rect.y, arm_width, arm_length//2))
+    # Right arm
+    right_arm_rect = Rect(px + body_width//2, arm_y, arm_width, arm_length)
+    pygame.draw.rect(surface, (255, 220, 177), right_arm_rect, border_radius=1)
+    pygame.draw.rect(surface, (240, 200, 157), Rect(right_arm_rect.x, right_arm_rect.y, arm_width, arm_length//2))
+    
+    # Hands
+    hand_size = 2
+    pygame.draw.circle(surface, (255, 220, 177), (px - body_width//2 - arm_width//2, arm_y + arm_length), hand_size)
+    pygame.draw.circle(surface, (255, 220, 177), (px + body_width//2 + arm_width//2, arm_y + arm_length), hand_size)
+    
+    # Legs (pants) with better proportions
+    leg_top = body_top + body_height
+    leg_width = 4
+    leg_height = 9
+    pants_color = (35, 35, 45)  # Dark pants
+    pants_dark = (25, 25, 35)
+    # Left leg
+    left_leg_rect = Rect(px - leg_width - 1, leg_top, leg_width, leg_height)
+    pygame.draw.rect(surface, pants_color, left_leg_rect, border_radius=1)
+    pygame.draw.rect(surface, pants_dark, Rect(left_leg_rect.x, left_leg_rect.y, leg_width, leg_height//2))
+    # Right leg
+    right_leg_rect = Rect(px + 1, leg_top, leg_width, leg_height)
+    pygame.draw.rect(surface, pants_color, right_leg_rect, border_radius=1)
+    pygame.draw.rect(surface, pants_dark, Rect(right_leg_rect.x, right_leg_rect.y, leg_width, leg_height//2))
+    
+    # Feet (shoes) - more detailed
+    foot_y = leg_top + leg_height
+    foot_width = 5
+    foot_height = 3
+    shoe_color = (15, 15, 15)  # Black shoes
+    shoe_sole = (25, 25, 25)
+    # Left foot
+    foot_rect_l = Rect(px - foot_width - 1, foot_y, foot_width, foot_height)
+    pygame.draw.rect(surface, shoe_color, foot_rect_l, border_radius=1)
+    pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_l.x, foot_rect_l.y + foot_height - 1, foot_width, 1))
+    # Right foot
+    foot_rect_r = Rect(px + 1, foot_y, foot_width, foot_height)
+    pygame.draw.rect(surface, shoe_color, foot_rect_r, border_radius=1)
+    pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_r.x, foot_rect_r.y + foot_height - 1, foot_width, 1))
+    
+    # Enhanced face features
+    # Eyes with whites
+    eye_y = head_y - 2
+    eye_size = 2
+    # Left eye
+    pygame.draw.circle(surface, (255, 255, 255), (px - 3, eye_y), eye_size)
+    pygame.draw.circle(surface, (0, 0, 0), (px - 3, eye_y), 1)
+    # Right eye
+    pygame.draw.circle(surface, (255, 255, 255), (px + 3, eye_y), eye_size)
+    pygame.draw.circle(surface, (0, 0, 0), (px + 3, eye_y), 1)
+    
+    # Nose
+    pygame.draw.circle(surface, (240, 200, 157), (px, head_y + 1), 1)
+    
+    # Mouth
+    pygame.draw.arc(surface, (180, 100, 100), Rect(px - 3, head_y + 2, 6, 3), 0, 3.14, 1)
 
 
 def update_player(keys):
@@ -307,7 +503,7 @@ def render():
 
 def handle_mouse(event):
     # popup buttons
-    if active_popup and active_popup.handle_event(event):
+    if active_popup and active_popup.handle_event(event, (SCREEN_W, SCREEN_H)):
         return True
     # click on building to open
     if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
