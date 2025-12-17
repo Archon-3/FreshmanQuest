@@ -46,10 +46,44 @@ class Button:
         # Enhanced border
         pygame.draw.rect(surface, border, self.rect, 2, border_radius=10)
         
-        # Text with better centering
-        label = font.render(self.text, True, fg)
-        label_rect = label.get_rect(center=self.rect.center)
-        surface.blit(label, label_rect)
+        # Text with better centering and wrapping if needed
+        # Check if text fits, if not, wrap it
+        text_width = font.size(self.text)[0]
+        max_width = self.rect.w - 20  # Leave padding
+        
+        if text_width > max_width:
+            # Wrap text - split into multiple lines
+            words = self.text.split(' ')
+            lines = []
+            current_line = []
+            current_width = 0
+            
+            for word in words:
+                word_width = font.size(word + ' ')[0]
+                if current_width + word_width > max_width and current_line:
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+                    current_width = word_width
+                else:
+                    current_line.append(word)
+                    current_width += word_width
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            # Render multiple lines
+            line_height = font.get_height()
+            total_height = len(lines) * line_height
+            start_y = self.rect.centery - total_height // 2 + line_height // 2
+            
+            for i, line_text in enumerate(lines):
+                label = font.render(line_text, True, fg)
+                label_rect = label.get_rect(centerx=self.rect.centerx, y=start_y + i * line_height)
+                surface.blit(label, label_rect)
+        else:
+            # Single line - render normally
+            label = font.render(self.text, True, fg)
+            label_rect = label.get_rect(center=self.rect.center)
+            surface.blit(label, label_rect)
 
     def handle_event(self, event):
         if self.disabled:

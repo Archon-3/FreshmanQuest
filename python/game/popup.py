@@ -18,7 +18,11 @@ class Popup:
         self.lines.append((text, small, color))
 
     def add_button(self, text, on_click, primary=False, disabled=False):
-        btn_w, btn_h = 200, 40
+        # Calculate button width based on text length to prevent text overflow
+        font = pygame.font.SysFont("Segoe UI", 18)
+        text_width = font.size(text)[0]
+        btn_w = max(160, min(240, text_width + 28))  # Min 160, max 240, or fit text + padding
+        btn_h = 38
         self.buttons.append(Button(Rect(0,0,btn_w,btn_h), text, on_click, primary=primary, disabled=disabled))
 
     def _update_button_positions(self, screen_size):
@@ -82,28 +86,71 @@ class Popup:
         surface.blit(title_text, (self.rect.x + 18, title_y))
         
         # Content area with better spacing and background
-        content_bg = Rect(self.rect.x + 18, self.rect.y + 50, self.rect.w - 36, 
-                         self.rect.bottom - 20 - 40 - (self.rect.y + 50) - 10)
+        content_padding = 20
+        content_x = self.rect.x + content_padding
+        content_y = self.rect.y + 55
+        content_width = self.rect.w - (content_padding * 2)
+        content_height = self.rect.bottom - 20 - 50 - content_y  # Space for buttons
+        
+        content_bg = Rect(content_x, content_y, content_width, content_height)
         content_surf = pygame.Surface((content_bg.w, content_bg.h), pygame.SRCALPHA)
-        content_surf.fill((248, 250, 252, 200))
+        content_surf.fill((248, 250, 252, 180))
         surface.blit(content_surf, (content_bg.x, content_bg.y), special_flags=pygame.BLEND_ALPHA_SDL2)
         
-        ly = self.rect.y + 65
+        # Text rendering with word wrapping
+        ly = content_y + 12
+        max_text_width = content_width - 40  # Leave padding on both sides
+        
         for text, small, color in self.lines:
             f = font_sm if small else font
-            # Add bullet point for better readability
-            if not small:
-                bullet_color = (79, 70, 229)
-                pygame.draw.circle(surface, bullet_color, (self.rect.x + 25, ly + f.get_height()//2), 3)
-                text_x = self.rect.x + 35
-            else:
-                text_x = self.rect.x + 25
-            # Text with slight shadow for readability
-            text_surf = f.render(text, True, color)
-            shadow_surf = f.render(text, True, (0, 0, 0, 30))
-            surface.blit(shadow_surf, (text_x + 1, ly + 1))
-            surface.blit(text_surf, (text_x, ly))
-            ly += 28 if not small else 22
+            line_height = f.get_height() + 4
+            
+            # Word wrap text if it's too long
+            words = text.split(' ')
+            lines = []
+            current_line = []
+            current_width = 0
+            
+            for word in words:
+                word_surf = f.render(word + ' ', True, color)
+                word_width = word_surf.get_width()
+                
+                if current_width + word_width > max_text_width and current_line:
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+                    current_width = word_width
+                else:
+                    current_line.append(word)
+                    current_width += word_width
+            
+            if current_line:
+                lines.append(' '.join(current_line))
+            
+            # Render each line
+            for line_text in lines:
+                if ly + line_height > content_bg.bottom - 10:
+                    break  # Don't draw outside content area
+                
+                # Bullet point for first line of each item
+                if line_text == lines[0] and not small:
+                    bullet_color = (79, 70, 229)
+                    pygame.draw.circle(surface, bullet_color, (content_x + 12, ly + line_height//2), 3)
+                    text_x = content_x + 24
+                else:
+                    text_x = content_x + 12 if small else content_x + 24
+                
+                # Render text with subtle shadow
+                text_surf = f.render(line_text, True, color)
+                # Shadow
+                shadow_surf = f.render(line_text, True, (0, 0, 0, 20))
+                surface.blit(shadow_surf, (text_x + 1, ly + 1))
+                # Main text
+                surface.blit(text_surf, (text_x, ly))
+                
+                ly += line_height
+            
+            # Add spacing between items
+            ly += 4
 
         # Buttons with better spacing
         for btn in self.buttons:
