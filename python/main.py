@@ -89,12 +89,28 @@ def toast(text, color=(30,30,30)):
 
 
 def draw_grass(surface: pygame.Surface):
-    surface.fill(BG_TOP)
-    # simple noise-like grass
-    for y in range(0, MAP_H, 16):
-        for x in range(0, MAP_W, 16):
-            c = GRASS1 if (x//16 + y//16) % 2 == 0 else GRASS2
-            pygame.draw.rect(surface, c, Rect(x, y, 16, 16))
+    """Draw grass covering the entire campus area."""
+    # Fill entire surface with base grass color
+    surface.fill(GRASS1)
+    
+    # Create a more realistic grass pattern with variation
+    for y in range(0, MAP_H, 8):
+        for x in range(0, MAP_W, 8):
+            # Create a more organic checkerboard pattern
+            pattern = (x//8 + y//8) % 2
+            if pattern == 0:
+                c = GRASS2
+            else:
+                c = GRASS1
+            pygame.draw.rect(surface, c, Rect(x, y, 8, 8))
+    
+    # Add some random grass texture spots for realism
+    for _ in range(50):
+        tx = random.randint(0, MAP_W - 4)
+        ty = random.randint(0, MAP_H - 4)
+        # Slightly darker or lighter grass patches
+        patch_color = GRASS2 if random.random() > 0.5 else (220, 245, 210)
+        pygame.draw.rect(surface, patch_color, Rect(tx, ty, 4, 4))
 
 
 def draw_gates(surface: pygame.Surface):
@@ -309,14 +325,14 @@ def draw_city_player(surface: pygame.Surface):
     body_height = 10
     body_width = 10
     body_rect = Rect(px - body_width//2, body_top, body_width, body_height)
-    shirt_color = (40, 90, 180)
-    shirt_dark = (25, 60, 140)
-    shirt_light = (60, 120, 220)
+    shirt_color = (255, 80, 60)  # Bright red-orange shirt for visibility
+    shirt_dark = (220, 50, 40)
+    shirt_light = (255, 120, 100)
     pygame.draw.rect(surface, shirt_color, body_rect, border_radius=2)
     pygame.draw.rect(surface, shirt_dark, Rect(body_rect.x, body_rect.y, body_rect.w, body_rect.h//2), border_radius=2)
     pygame.draw.line(surface, shirt_light, (body_rect.x + 1, body_rect.y + body_rect.h//2), 
                     (body_rect.x + body_rect.w - 1, body_rect.y + body_rect.h//2), 1)
-    pygame.draw.rect(surface, (20, 50, 120), body_rect, 1, border_radius=2)
+    pygame.draw.rect(surface, (180, 30, 20), body_rect, 1, border_radius=2)
     
     # Arms
     arm_width = 3
@@ -338,8 +354,8 @@ def draw_city_player(surface: pygame.Surface):
     leg_top = body_top + body_height
     leg_width = 4
     leg_height = 9
-    pants_color = (35, 35, 45)
-    pants_dark = (25, 25, 35)
+    pants_color = (255, 220, 0)  # Yellow trousers
+    pants_dark = (220, 190, 0)
     left_leg_rect = Rect(px - leg_width - 1, leg_top, leg_width, leg_height)
     pygame.draw.rect(surface, pants_color, left_leg_rect, border_radius=1)
     pygame.draw.rect(surface, pants_dark, Rect(left_leg_rect.x, left_leg_rect.y, leg_width, leg_height//2))
@@ -351,8 +367,8 @@ def draw_city_player(surface: pygame.Surface):
     foot_y = leg_top + leg_height
     foot_width = 5
     foot_height = 3
-    shoe_color = (15, 15, 15)
-    shoe_sole = (25, 25, 25)
+    shoe_color = (255, 255, 255)  # White shoes
+    shoe_sole = (200, 200, 200)
     foot_rect_l = Rect(px - foot_width - 1, foot_y, foot_width, foot_height)
     pygame.draw.rect(surface, shoe_color, foot_rect_l, border_radius=1)
     pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_l.x, foot_rect_l.y + foot_height - 1, foot_width, 1))
@@ -704,6 +720,20 @@ def draw_building(surface: pygame.Surface, b):
             
             # Window sill
             pygame.draw.rect(surface, (100, 90, 80), Rect(wx-2, wy+wh, ww+4, 2))
+    
+    # Building name sign
+    building_name = b.get('name', 'Building')
+    name_text = FONT_SM.render(building_name, True, WHITE)
+    # Position name above the door or on the building front
+    name_y = rect.y + 25
+    name_bg = Rect(rect.centerx - name_text.get_width()//2 - 5, 
+                  name_y - 2, name_text.get_width() + 10, name_text.get_height() + 4)
+    # Semi-transparent black background for readability
+    name_bg_surf = pygame.Surface((name_bg.w, name_bg.h), pygame.SRCALPHA)
+    name_bg_surf.fill((0, 0, 0, 180))
+    surface.blit(name_bg_surf, name_bg)
+    pygame.draw.rect(surface, WHITE, name_bg, 1, border_radius=3)
+    surface.blit(name_text, (rect.centerx - name_text.get_width()//2, name_y))
 
 
 def draw_map(surface: pygame.Surface):
@@ -881,16 +911,16 @@ def draw_player(surface: pygame.Surface):
     body_width = 10
     body_rect = Rect(px - body_width//2, body_top, body_width, body_height)
     
-    # Shirt with shading
-    shirt_color = (40, 90, 180)  # Blue shirt
-    shirt_dark = (25, 60, 140)
-    shirt_light = (60, 120, 220)
+    # Shirt with shading - bright red/orange for visibility on dark road
+    shirt_color = (255, 80, 60)  # Bright red-orange shirt
+    shirt_dark = (220, 50, 40)
+    shirt_light = (255, 120, 100)
     pygame.draw.rect(surface, shirt_color, body_rect, border_radius=2)
     # Shirt shading
     pygame.draw.rect(surface, shirt_dark, Rect(body_rect.x, body_rect.y, body_rect.w, body_rect.h//2), border_radius=2)
     pygame.draw.line(surface, shirt_light, (body_rect.x + 1, body_rect.y + body_rect.h//2), 
                     (body_rect.x + body_rect.w - 1, body_rect.y + body_rect.h//2), 1)
-    pygame.draw.rect(surface, (20, 50, 120), body_rect, 1, border_radius=2)
+    pygame.draw.rect(surface, (180, 30, 20), body_rect, 1, border_radius=2)
     
     # Arms with better positioning and shading
     arm_width = 3
@@ -914,8 +944,8 @@ def draw_player(surface: pygame.Surface):
     leg_top = body_top + body_height
     leg_width = 4
     leg_height = 9
-    pants_color = (35, 35, 45)  # Dark pants
-    pants_dark = (25, 25, 35)
+    pants_color = (255, 220, 0)  # Yellow trousers
+    pants_dark = (220, 190, 0)
     # Left leg
     left_leg_rect = Rect(px - leg_width - 1, leg_top, leg_width, leg_height)
     pygame.draw.rect(surface, pants_color, left_leg_rect, border_radius=1)
@@ -929,8 +959,8 @@ def draw_player(surface: pygame.Surface):
     foot_y = leg_top + leg_height
     foot_width = 5
     foot_height = 3
-    shoe_color = (15, 15, 15)  # Black shoes
-    shoe_sole = (25, 25, 25)
+    shoe_color = (255, 255, 255)  # White shoes
+    shoe_sole = (200, 200, 200)
     # Left foot
     foot_rect_l = Rect(px - foot_width - 1, foot_y, foot_width, foot_height)
     pygame.draw.rect(surface, shoe_color, foot_rect_l, border_radius=1)
