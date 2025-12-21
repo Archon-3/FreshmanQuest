@@ -74,3 +74,46 @@ Social star
 Burnout / dropout
 Hidden secret ending
 Your ending depends entirely on your choices throughout the game.
+
+🛠️ Tech Stack (Planned / Flexible)
+
+Game Engine: Unity / Unreal / Godot (concept-agnostic)
+
+Programming: C#, C++, or GDScript
+
+Assets: Custom + open-source
+
+Platform: PC (future mobile support possible)
+
+🚀 Future Features
+
+Multiplayer campus mode
+
+AI-driven NPC students & lecturers
+
+Seasonal semesters
+
+Scholarship & internship systems
+
+Leaderboards & achievements
+
+👤 Target Audience
+
+University students
+
+High school students preparing for university
+
+Casual and simulation game players
+
+Educational & storytelling game fans
+
+📄 License
+
+This project is currently a concept / prototype.
+License will be defined upon public release.
+
+❤️ Vision
+
+Freshman Quest aims to entertain, educate, and emotionally connect with players by turning everyday student life into an engaging adventure.
+
+“University is not just about grades — it’s a quest.”
