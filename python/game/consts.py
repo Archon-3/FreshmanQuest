@@ -12,7 +12,11 @@ SLATE = (100,116,139)
 BG_TOP = (247,249,255)
 GRASS1 = (234,251,231)
 GRASS2 = (208,240,200)
-PATH = (243,232,215)
+# Road colors
+ASPHALT = (40, 40, 45)  # Dark black asphalt
+ASPHALT_DARK = (30, 30, 35)  # Even darker for depth
+ROAD_LINE = (255, 255, 255)  # White road markings
+ROAD_EDGE = (50, 50, 55)  # Road edge color
 BORDER = (229,231,235)
 PANEL = (255,255,255)
 TEXT = (31,41,55)
