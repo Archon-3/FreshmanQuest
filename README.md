@@ -49,5 +49,28 @@ Energy – Required for actions
 Social Reputation – Unlocks opportunities
 Discipline – Impacts long-term success
 Balancing these stats is essential to winning the game.
-
 Exploration of campus locations
+
+🧩 Quests & Challenges
+
+Attend lectures and exams
+
+Submit assignments before deadlines
+
+Join clubs and social events
+
+Make friends (or rivals)
+
+Handle unexpected challenges (missed exams, low grades, burnout)
+
+Main quests push the story forward, while side quests enrich the experience.
+
+🎯 Objectives & Endings
+
+The game features multiple endings, such as:
+Academic excellence
+Balanced student life
+Social star
+Burnout / dropout
+Hidden secret ending
+Your ending depends entirely on your choices throughout the game.
