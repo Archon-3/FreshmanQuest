@@ -1,119 +1,106 @@
-🎮 Freshman Quest
+<div align="center">
 
-Freshman Quest is a story-driven adventure game that simulates the real-life journey of a university freshman. The game blends exploration, decision-making, and progression mechanics to reflect academic life, social challenges, and personal growth during the first year at university.
+# 🎓 Freshman Quest
+### *Survive. Decide. Become.*
 
-🧠 Game Concept
+A story-driven university life simulation game where every choice shapes your future.
 
-Starting university is exciting, confusing, and challenging. Freshman Quest turns that experience into an interactive journey where players must balance:
+![Game Status](https://img.shields.io/badge/status-concept-blue)
+![Genre](https://img.shields.io/badge/genre-simulation%20%7C%20adventure-purple)
+![Platform](https://img.shields.io/badge/platform-PC-lightgrey)
 
-📚 Academics
-🧑‍🤝‍🧑 Social life
-💰 Resources (time, energy, money)
-🎯 Personal goals
+</div>
 
-Every choice matters. Your decisions shape your character’s future.
+---
 
-🕹️ Gameplay Overview
+## 🌟 About the Game
 
-Role: A freshman student entering university for the first time
-Perspective: Third-person or top-down (flexible by engine)
-Core Mechanics:
-Quest-based progression
-Choice-driven outcomes
-Skill and stat development
+**Freshman Quest** is a narrative-based simulation game that recreates the real challenges of university life.  
+Players experience academics, friendships, stress, and personal growth through meaningful choices and immersive quests.
 
-🗺️ Game World
+> *University is not just a place — it’s a journey.*
 
-Players explore a dynamic university environment including:
+---
 
-Lecture halls & labs
+## 🕹️ Gameplay Highlights
 
-Dormitories
+- 🎯 Choice-driven story with **multiple endings**
+- 📚 Academic & life simulation mechanics
+- 🧠 Stat-based character progression
+- 🗺️ Open campus exploration
+- 🧑‍🤝‍🧑 Dynamic NPC interactions
 
-Library
+---
 
-Cafeteria
+## 📊 Player Stats System
 
-Clubs & activity centers
+| Stat | Description |
+|----|----|
+| 📘 Knowledge | Academic performance |
+| ⚡ Energy | Limits daily actions |
+| 😓 Stress | Affects performance |
+| 🤝 Reputation | Social influence |
+| 🎓 Discipline | Long-term success |
 
-Exam halls
+---
 
-Each location unlocks specific events, quests, and interactions.
+## 🗺️ Campus Locations
 
-📈 Player Stats & Progression
+- 🏫 Lecture Halls  
+- 📖 Library  
+- 🛏️ Dormitory  
+- 🍽️ Cafeteria  
+- 🎉 Clubs & Events  
 
-The player evolves through key attributes:
-Knowledge – Improves academic performance
-Stress – Too much affects gameplay negatively
-Energy – Required for actions
-Social Reputation – Unlocks opportunities
-Discipline – Impacts long-term success
-Balancing these stats is essential to winning the game.
-Exploration of campus locations
+Each location unlocks unique quests and interactions.
 
-🧩 Quests & Challenges
+---
 
-Attend lectures and exams
+## 🎯 Endings
 
-Submit assignments before deadlines
+Your decisions lead to different futures:
 
-Join clubs and social events
+- 🏆 Academic Excellence  
+- ⚖️ Balanced Student Life  
+- 🌟 Social Icon  
+- 💥 Burnout / Dropout  
+- 🔒 Secret Ending  
 
-Make friends (or rivals)
+---
 
-Handle unexpected challenges (missed exams, low grades, burnout)
+## 🛠️ Tech Stack (Planned)
 
-Main quests push the story forward, while side quests enrich the experience.
+- **Engine**: pygame  
+- **Language**: python 
+- **Platform**: PC (Mobile support planned)  
 
-🎯 Objectives & Endings
+---
 
-The game features multiple endings, such as:
-Academic excellence
-Balanced student life
-Social star
-Burnout / dropout
-Hidden secret ending
-Your ending depends entirely on your choices throughout the game.
+## 🚀 Roadmap
 
-🛠️ Tech Stack (Planned / Flexible)
+- [ ] Core gameplay mechanics  
+- [ ] Story & quest system  
+- [ ] Campus map design  
+- [ ] NPC AI behaviors  
+- [ ] Multiple endings implementation  
 
-Game Engine: Unity / Unreal / Godot (concept-agnostic)
+---
 
-Programming: C#, C++, or GDScript
+## 🤝 Contributing
 
-Assets: Custom + open-source
+This project is currently in the **concept stage**.  
+Ideas, feedback, and collaboration are welcome.
 
-Platform: PC (future mobile support possible)
+---
 
-🚀 Future Features
+## 📄 License
 
-Multiplayer campus mode
+License will be added upon public release.
 
-AI-driven NPC students & lecturers
+---
 
-Seasonal semesters
+<div align="center">
 
-Scholarship & internship systems
+### ❤️ Built with passion for student life
 
-Leaderboards & achievements
-
-👤 Target Audience
-
-University students
-
-High school students preparing for university
-
-Casual and simulation game players
-
-Educational & storytelling game fans
-
-📄 License
-
-This project is currently a concept / prototype.
-License will be defined upon public release.
-
-❤️ Vision
-
-Freshman Quest aims to entertain, educate, and emotionally connect with players by turning everyday student life into an engaging adventure.
-
-“University is not just about grades — it’s a quest.”
+</div>
