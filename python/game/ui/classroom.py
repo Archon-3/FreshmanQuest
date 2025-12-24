@@ -49,11 +49,18 @@ def build_popup(h):
         p.add_line("Attend your first class to earn your badge.")
         def first_class():
             if not s.flags['firstClassBadge'] and s.quests['programOrientation']:
+                if s.energy < 10:
+                    h['toast']("Too tired to attend class! Need at least 10 energy.")
+                    return
                 s.flags['firstClassBadge'] = True
                 h['addItem']('First Class Badge')
                 h['addXP'](10)
+                h['addKnowledge'](12)
+                h['addStress'](2)
+                h['addEnergy'](-10)
+                h['addReputation'](3)  # Attending class improves reputation
                 h['completeQuest']('firstClass')
-                h['toast']("First Class completed (+10 XP)")
+                h['toast']("First Class completed (+10 XP, +12 Knowledge, +3 Reputation)")
                 h['rebuild']()
         p.add_button("Attend First Class (+10 XP)", first_class, primary=False, disabled=not s.quests['programOrientation'])
 
@@ -81,9 +88,16 @@ def build_popup(h):
     if not s.quests['programOrientation']:
         p.add_line("Program Orientation is required to start.")
         def orient():
+            if s.energy < 15:
+                h['toast']("Too tired for orientation! Need at least 15 energy.")
+                return
             h['completeQuest']('programOrientation')
             h['addXP'](10)
-            h['toast']("Orientation complete (+10 XP)")
+            h['addKnowledge'](5)
+            h['addReputation'](5)  # Meeting people at orientation
+            h['addEnergy'](-15)
+            h['addStress'](1)
+            h['toast']("Orientation complete (+10 XP, +5 Knowledge, +5 Reputation)")
             h['rebuild']()
         p.add_button("Attend Orientation (+10 XP)", orient, primary=True)
         return p
@@ -101,12 +115,24 @@ def build_popup(h):
         done = sum(1 for i,_ in enumerate(plist) if s.meta['programCourses'].get(f"pcourse:{s.meta['school']}:{i}"))
         p.add_line(f"Program core progress: {done}/{len(plist)}")
         def do_next():
+            if s.energy < 20:
+                h['toast']("Too tired for class! Need at least 20 energy.")
+                return
             k = f"pcourse:{s.meta['school']}:{next_idx}"
             if not s.meta['programCourses'].get(k):
                 s.meta['programCourses'][k] = True
                 h['addXP'](5)
+                knowledge_gain = 10
+                # High knowledge makes learning easier
+                if s.knowledge > 60:
+                    knowledge_gain += 2
+                h['addKnowledge'](knowledge_gain)
+                h['addStress'](3)
+                h['addEnergy'](-20)
+                h['addDiscipline'](3)
                 if done + 1 >= len(plist):
                     h['completeQuest']('completeProgramCourses')
+                    h['addReputation'](10)  # Bonus for completing program
                 h['rebuild']()
         p.add_button("Complete next core course (+5 XP)", do_next, primary=True)
         return p
@@ -138,12 +164,23 @@ def build_popup(h):
         done = sum(1 for i,_ in enumerate(dlist) if s.meta['courses'].get(f"course:{s.meta['school']}:{dep_id}:{i}"))
         p.add_line(f"Dept course progress: {done}/{len(dlist)}")
         def do_next_dep():
+            if s.energy < 25:
+                h['toast']("Too tired for advanced class! Need at least 25 energy.")
+                return
             k = f"course:{s.meta['school']}:{dep_id}:{next_idx}"
             if not s.meta['courses'].get(k):
                 s.meta['courses'][k] = True
                 h['addXP'](5)
+                knowledge_gain = 15
+                if s.knowledge > 70:
+                    knowledge_gain += 3
+                h['addKnowledge'](knowledge_gain)
+                h['addStress'](4)
+                h['addEnergy'](-25)
+                h['addDiscipline'](4)
                 if done + 1 >= len(dlist):
                     h['completeQuest']('completeDepartmentCourses')
+                    h['addReputation'](15)  # Major achievement
                 h['rebuild']()
         p.add_button("Complete next dept course (+5 XP)", do_next_dep, primary=True)
         return p
