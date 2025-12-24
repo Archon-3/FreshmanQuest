@@ -5,7 +5,7 @@ import pygame
 from pygame import Rect
 
 from game.state import GameState
-from game.consts import SCREEN_W, SCREEN_H, MAP_W, MAP_H, HUD_W, FPS, WHITE, BLACK, SLATE, BG_TOP, GRASS1, GRASS2, ASPHALT, ASPHALT_DARK, ROAD_LINE, ROAD_EDGE, BORDER, PANEL, TEXT, MUTED, PRIMARY, SUCCESS, ENERGY_BG, ENERGY_BAR, DOOR
+from game.consts import SCREEN_W, SCREEN_H, MAP_W, MAP_H, HUD_W, FPS, WHITE, BLACK, SLATE, BG_TOP, GRASS1, GRASS2, ASPHALT, ASPHALT_DARK, ROAD_LINE, ROAD_EDGE, BORDER, PANEL, TEXT, MUTED, PRIMARY, SUCCESS, ENERGY_BG, ENERGY_BAR, DOOR, KNOWLEDGE_BAR, STRESS_BAR, REPUTATION_BAR, DISCIPLINE_BAR
 from game.buildings import get_buildings, color_for
 from game.widgets import Button
 from game import ui as UI
@@ -752,6 +752,16 @@ def draw_energy_bar(surface, x, y, w, h, pct):
         pygame.draw.rect(surface, ENERGY_BAR, Rect(x+1, y+1, fill_w, h-2), border_radius=8)
     pygame.draw.rect(surface, BORDER, Rect(x, y, w, h), 1, border_radius=8)
 
+def draw_stat_bar(surface, x, y, w, h, pct, color, bg_color=None):
+    """Generic stat bar drawer."""
+    if bg_color is None:
+        bg_color = ENERGY_BG
+    pygame.draw.rect(surface, bg_color, Rect(x, y, w, h), border_radius=8)
+    fill_w = int((w-2) * max(0, min(1.0, pct)))
+    if fill_w > 0:
+        pygame.draw.rect(surface, color, Rect(x+1, y+1, fill_w, h-2), border_radius=8)
+    pygame.draw.rect(surface, BORDER, Rect(x, y, w, h), 1, border_radius=8)
+
 
 def draw_hud(surface: pygame.Surface):
     surface.fill((0,0,0,0))
@@ -763,17 +773,51 @@ def draw_hud(surface: pygame.Surface):
     title = FONT_LG.render("Freshman Quest", True, TEXT)
     surface.blit(title, (14,y)); y += 30
 
-    # Stats panel
+    # Time display
+    time_text = FONT_SM.render(state.get_time_display(), True, PRIMARY)
+    time_bg = Rect(12, y, HUD_W-24, 28)
+    pygame.draw.rect(surface, (239, 246, 255), time_bg, border_radius=8)
+    pygame.draw.rect(surface, PRIMARY, time_bg, 1, border_radius=8)
+    surface.blit(time_text, (time_bg.centerx - time_text.get_width()//2, time_bg.centery - time_text.get_height()//2))
+    y += 32
+
+    # Stats panel - expanded to show all stats
     stats_y = y
-    pygame.draw.rect(surface, PANEL, Rect(12, stats_y, HUD_W-24, 120), border_radius=12)
-    pygame.draw.rect(surface, BORDER, Rect(12, stats_y, HUD_W-24, 120), 1, border_radius=12)
+    stats_panel_h = 240  # Increased height for all stats
+    pygame.draw.rect(surface, PANEL, Rect(12, stats_y, HUD_W-24, stats_panel_h), border_radius=12)
+    pygame.draw.rect(surface, BORDER, Rect(12, stats_y, HUD_W-24, stats_panel_h), 1, border_radius=12)
     y += 10
-    surface.blit(FONT.render(f"XP: {state.xp}", True, TEXT), (24, y)); y += 22
-    surface.blit(FONT.render(f"Rank: {state.rank_for_xp()}", True, TEXT), (24, y)); y += 22
-    surface.blit(FONT.render("Energy:", True, TEXT), (24, y));
-    draw_energy_bar(surface, 100, y+4, HUD_W-24-100, 14, state.energy/100.0)
-    surface.blit(FONT_SM.render(f"{state.energy}", True, MUTED), (HUD_W-50, y));
-    y = stats_y + 120 + 12
+    
+    # XP and Rank
+    surface.blit(FONT_SM.render(f"XP: {state.xp}", True, TEXT), (24, y)); y += 18
+    surface.blit(FONT_SM.render(f"Rank: {state.rank_for_xp()}", True, TEXT), (24, y)); y += 22
+    
+    # Energy bar
+    surface.blit(FONT_SM.render("⚡ Energy:", True, TEXT), (24, y));
+    draw_stat_bar(surface, 100, y+2, HUD_W-24-100, 12, state.energy/100.0, ENERGY_BAR)
+    surface.blit(FONT_SM.render(f"{state.energy}", True, MUTED), (HUD_W-50, y)); y += 20
+    
+    # Knowledge bar
+    surface.blit(FONT_SM.render("📘 Knowledge:", True, TEXT), (24, y));
+    draw_stat_bar(surface, 100, y+2, HUD_W-24-100, 12, state.knowledge/100.0, KNOWLEDGE_BAR)
+    surface.blit(FONT_SM.render(f"{state.knowledge}", True, MUTED), (HUD_W-50, y)); y += 20
+    
+    # Stress bar
+    surface.blit(FONT_SM.render("😓 Stress:", True, TEXT), (24, y));
+    draw_stat_bar(surface, 100, y+2, HUD_W-24-100, 12, state.stress/100.0, STRESS_BAR)
+    surface.blit(FONT_SM.render(f"{state.stress}", True, MUTED), (HUD_W-50, y)); y += 20
+    
+    # Reputation bar
+    surface.blit(FONT_SM.render("🤝 Reputation:", True, TEXT), (24, y));
+    draw_stat_bar(surface, 100, y+2, HUD_W-24-100, 12, state.reputation/100.0, REPUTATION_BAR)
+    surface.blit(FONT_SM.render(f"{state.reputation}", True, MUTED), (HUD_W-50, y)); y += 20
+    
+    # Discipline bar
+    surface.blit(FONT_SM.render("🎓 Discipline:", True, TEXT), (24, y));
+    draw_stat_bar(surface, 100, y+2, HUD_W-24-100, 12, state.discipline/100.0, DISCIPLINE_BAR)
+    surface.blit(FONT_SM.render(f"{state.discipline}", True, MUTED), (HUD_W-50, y)); y += 20
+    
+    y = stats_y + stats_panel_h + 12
 
     # Inventory panel
     inv_h = 140
@@ -829,11 +873,21 @@ def check_overlap():
 
 def open_popup_for(key: str):
     global active_popup, suppress_until_exit
+    # Check if building is accessible at current time
+    if not state.can_access_building(key):
+        toast(f"{key.capitalize()} is closed at this time.")
+        return
+    
     helpers = {
         'addXP': state.add_xp,
         'addItem': state.add_item,
         'completeQuest': state.complete_quest,
         'setEnergy': state.set_energy,
+        'addEnergy': state.add_energy,
+        'addKnowledge': state.add_knowledge,
+        'addStress': state.add_stress,
+        'addReputation': state.add_reputation,
+        'addDiscipline': state.add_discipline,
         'state': state,
         'toast': toast,
         'close': close_popup,
@@ -1146,8 +1200,22 @@ def handle_mouse(event):
 def main():
     global suppress_until_exit, current_overlap
     running = True
+    frame_count = 0
     while running:
         CLOCK.tick(FPS)
+        frame_count += 1
+        
+        # Update time system every frame (ticks passed = 1)
+        time_changed = state.update_time(1)
+        if time_changed:
+            # Time of day changed - could trigger events here
+            # Note: Toast removed to avoid spam, but time progression is working
+            pass
+        
+        # Process stat decay/regeneration every 60 frames (1 second at 60 FPS)
+        if frame_count % 60 == 0:
+            state.process_stat_decay()
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
