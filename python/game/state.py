@@ -8,7 +8,14 @@ class GameState:
         self.x = 100
         self.y = 269  # Center on main road
         self.speed = 3
+        
+        # Core stats (0-100 range)
         self.energy = 80
+        self.knowledge = 20  # Academic performance
+        self.stress = 30  # Affects performance
+        self.reputation = 25  # Social influence
+        self.discipline = 40  # Long-term success factor
+        
         self.xp = 0
         self.inventory = set()
         self.quests = {
@@ -41,6 +48,13 @@ class GameState:
             'programCourses': {},
             'booksRead': 0
         }
+        
+        # Time system
+        self.day = 1  # Current day
+        self.time_of_day = 'Morning'  # Morning, Afternoon, Evening, Night
+        self.time_tick = 0  # Internal counter for time progression
+        self.last_time_update = 0  # Track when time last updated (in game ticks)
+        
         self.popup_open = False
         self.suppress_until_exit = False
         self.victory_awarded = False
@@ -65,6 +79,115 @@ class GameState:
 
     def set_energy(self, v):
         self.energy = max(0, min(100, int(v)))
+    
+    def add_energy(self, v):
+        """Add energy (can be negative)."""
+        self.energy = max(0, min(100, self.energy + int(v)))
+    
+    def set_knowledge(self, v):
+        self.knowledge = max(0, min(100, int(v)))
+    
+    def add_knowledge(self, v):
+        """Add knowledge (can be negative)."""
+        self.knowledge = max(0, min(100, self.knowledge + int(v)))
+    
+    def set_stress(self, v):
+        self.stress = max(0, min(100, int(v)))
+    
+    def add_stress(self, v):
+        """Add stress (can be negative)."""
+        self.stress = max(0, min(100, self.stress + int(v)))
+    
+    def set_reputation(self, v):
+        self.reputation = max(0, min(100, int(v)))
+    
+    def add_reputation(self, v):
+        """Add reputation (can be negative)."""
+        self.reputation = max(0, min(100, self.reputation + int(v)))
+    
+    def set_discipline(self, v):
+        self.discipline = max(0, min(100, int(v)))
+    
+    def add_discipline(self, v):
+        """Add discipline (can be negative)."""
+        self.discipline = max(0, min(100, self.discipline + int(v)))
+    
+    def update_time(self, ticks_passed=1):
+        """Update time system. Returns True if time of day changed."""
+        self.time_tick += ticks_passed
+        self.last_time_update += ticks_passed
+        
+        # Time progression: every 600 ticks (10 seconds at 60 FPS) = advance time of day
+        # This means each time period lasts 10 seconds, full day cycle = 40 seconds
+        old_time = self.time_of_day
+        time_sequence = ['Morning', 'Afternoon', 'Evening', 'Night']
+        current_idx = time_sequence.index(self.time_of_day)
+        
+        # Calculate how many time periods have passed
+        periods_passed = self.time_tick // 600
+        
+        if periods_passed > 0:
+            # Calculate new time index
+            new_idx = (current_idx + periods_passed) % 4
+            self.time_of_day = time_sequence[new_idx]
+            
+            # Calculate days passed
+            total_periods = current_idx + periods_passed
+            days_passed = total_periods // 4
+            if days_passed > 0:
+                self.day += days_passed
+            
+            # Reset time_tick to prevent overflow (keep remainder)
+            self.time_tick = self.time_tick % 600
+        
+        # Return True if time of day changed
+        return old_time != self.time_of_day
+    
+    def get_time_display(self):
+        """Get formatted time string for display."""
+        return f"Day {self.day} - {self.time_of_day}"
+    
+    def is_time(self, *times):
+        """Check if current time matches any of the given times."""
+        return self.time_of_day in times
+    
+    def can_access_building(self, building_key):
+        """Check if building is accessible at current time."""
+        # Cafeteria closed at night
+        if building_key == 'cafeteria' and self.time_of_day == 'Night':
+            return False
+        # Library closed at night
+        if building_key == 'library' and self.time_of_day == 'Night':
+            return False
+        # Admin office closed in evening and night
+        if building_key == 'admin' and self.time_of_day in ['Evening', 'Night']:
+            return False
+        # Classroom closed at night (but open other times)
+        if building_key == 'classroom' and self.time_of_day == 'Night':
+            return False
+        return True
+    
+    def process_stat_decay(self):
+        """Process natural stat decay/regeneration based on time and discipline."""
+        # High discipline reduces negative effects
+        discipline_factor = max(0.3, 1.0 - (self.discipline / 150.0))  # 0.3 to 1.0
+        
+        # Stress naturally increases slightly over time (unless high discipline)
+        # More stress if already stressed (vicious cycle)
+        stress_increase = 0.5 * discipline_factor
+        if self.stress > 70:
+            stress_increase *= 1.5  # High stress makes it worse
+        self.add_stress(stress_increase)
+        
+        # Knowledge decays very slowly if not maintained (only if discipline is low)
+        if self.discipline < 30:
+            knowledge_decay = 0.2 * (1.0 - discipline_factor)
+            self.add_knowledge(-knowledge_decay)
+        
+        # Reputation decays slowly if discipline is low
+        if self.discipline < 40:
+            reputation_decay = 0.1 * (1.0 - discipline_factor)
+            self.add_reputation(-reputation_decay)
 
     def rank_for_xp(self):
         x = self.xp
