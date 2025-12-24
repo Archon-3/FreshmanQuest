@@ -5,3 +5,5 @@ venv/
 # Python cache
 __pycache__/
 *.pyc
+IMPROVEMENT_PLAN.md
+IMPLEMENTATION_SUMMARY.md

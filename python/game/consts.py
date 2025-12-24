@@ -26,6 +26,11 @@ SUCCESS = (16,185,129)
 ENERGY_BAR = (52,211,153)
 ENERGY_BG = (243,244,246)
 DOOR = (55,65,81)
+# Stat bar colors
+KNOWLEDGE_BAR = (59, 130, 246)  # Blue
+STRESS_BAR = (239, 68, 68)  # Red
+REPUTATION_BAR = (168, 85, 247)  # Purple
+DISCIPLINE_BAR = (34, 197, 94)  # Green
 
 COLORS_BY_BUILDING = {
     'dorm': (124, 58, 237),
