@@ -8,11 +8,16 @@ def build_popup(h):
 
     def get_id():
         if not s.flags['studentId']:
+            if s.energy < 10:
+                h['toast']("Too tired! Need at least 10 energy.")
+                return
             s.flags['studentId'] = True
             h['addItem']('Student ID Card')
             h['addXP'](15)
+            h['addReputation'](3)  # Official student status
+            h['addEnergy'](-10)
             h['completeQuest']('studentId')
-            h['toast']('Student ID collected (+15 XP)')
+            h['toast']('Student ID collected (+15 XP, +3 Reputation)')
             h['rebuild']()
 
     def get_tt():
