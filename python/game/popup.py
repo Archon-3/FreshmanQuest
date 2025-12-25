@@ -79,10 +79,14 @@ class Popup:
         # Title with icon space and better styling
         title_y = self.rect.y + 18
         title_text = font_lg.render(self.title, True, TEXT)
+        # Title shadow for depth
+        title_shadow = font_lg.render(self.title, True, (0, 0, 0, 100))
+        surface.blit(title_shadow, (self.rect.x + 19, title_y + 1))
         # Add subtle underline decoration
         pygame.draw.line(surface, (79, 70, 229), 
                         (self.rect.x + 18, title_y + title_text.get_height() + 4),
                         (self.rect.x + 18 + title_text.get_width(), title_y + title_text.get_height() + 4), 2)
+        # Main title text
         surface.blit(title_text, (self.rect.x + 18, title_y))
         
         # Content area with better spacing and background
@@ -139,10 +143,10 @@ class Popup:
                 else:
                     text_x = content_x + 12 if small else content_x + 24
                 
-                # Render text with subtle shadow
+                # Render text with enhanced shadow for better readability
                 text_surf = f.render(line_text, True, color)
-                # Shadow
-                shadow_surf = f.render(line_text, True, (0, 0, 0, 20))
+                # Enhanced shadow with better contrast
+                shadow_surf = f.render(line_text, True, (0, 0, 0, 100))
                 surface.blit(shadow_surf, (text_x + 1, ly + 1))
                 # Main text
                 surface.blit(text_surf, (text_x, ly))
