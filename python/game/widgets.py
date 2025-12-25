@@ -77,12 +77,26 @@ class Button:
             
             for i, line_text in enumerate(lines):
                 label = font.render(line_text, True, fg)
+                label_shadow = font.render(line_text, True, (0, 0, 0, 80))
                 label_rect = label.get_rect(centerx=self.rect.centerx, y=start_y + i * line_height)
+                # Shadow
+                shadow_rect = label_rect.copy()
+                shadow_rect.x += 1
+                shadow_rect.y += 1
+                surface.blit(label_shadow, shadow_rect)
+                # Main text
                 surface.blit(label, label_rect)
         else:
-            # Single line - render normally
+            # Single line - render with shadow
             label = font.render(self.text, True, fg)
+            label_shadow = font.render(self.text, True, (0, 0, 0, 80))
             label_rect = label.get_rect(center=self.rect.center)
+            # Shadow
+            shadow_rect = label_rect.copy()
+            shadow_rect.x += 1
+            shadow_rect.y += 1
+            surface.blit(label_shadow, shadow_rect)
+            # Main text
             surface.blit(label, label_rect)
 
     def handle_event(self, event):
