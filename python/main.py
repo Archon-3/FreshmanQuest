@@ -16,9 +16,24 @@ SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 pygame.display.set_caption("Freshman Quest — Python Edition")
 CLOCK = pygame.time.Clock()
 
-FONT = pygame.font.SysFont("Segoe UI", 18, bold=False)
-FONT_SM = pygame.font.SysFont("Segoe UI", 15, bold=False)
-FONT_LG = pygame.font.SysFont("Segoe UI", 24, bold=True)
+# Font initialization with fallback handling
+def get_font(size, bold=False):
+    """Get font with fallback options."""
+    font_list = ["Segoe UI", "Arial", "Helvetica", "sans-serif"]
+    for font_name in font_list:
+        try:
+            font = pygame.font.SysFont(font_name, size, bold=bold)
+            # Test if font loaded correctly
+            if font.size("Test")[0] > 0:
+                return font
+        except:
+            continue
+    # Ultimate fallback
+    return pygame.font.Font(None, size)
+
+FONT = get_font(18, bold=False)
+FONT_SM = get_font(15, bold=False)
+FONT_LG = get_font(24, bold=True)
 FONTS = { 'font': FONT, 'font_sm': FONT_SM, 'font_lg': FONT_LG }
 
 state = GameState()
@@ -245,9 +260,12 @@ def check_city_gate_collision():
         # Set campus player position
         if px < SCREEN_W // 2:
             player_rect.x = 50  # Left gate
+            state.x = 50
         else:
             player_rect.x = MAP_W - 50  # Right gate
+            state.x = MAP_W - 50
         player_rect.y = MAP_H // 2 - PLAYER_SIZE // 2
+        state.y = MAP_H // 2 - PLAYER_SIZE // 2
         
         # Reset for next city visit
         state.city_player_x = 600
@@ -1098,14 +1116,19 @@ def update_player(keys):
         if is_player_on_road(temp_rect):
             player_rect.x = new_x
             player_rect.y = new_y
+            # Synchronize state with player_rect
+            state.x = new_x
+            state.y = new_y
         else:
             # Try moving only horizontally or vertically if diagonal movement fails
             temp_rect_x = Rect(new_x, player_rect.y, PLAYER_SIZE, PLAYER_SIZE)
             temp_rect_y = Rect(player_rect.x, new_y, PLAYER_SIZE, PLAYER_SIZE)
             if is_player_on_road(temp_rect_x):
                 player_rect.x = new_x
+                state.x = new_x
             elif is_player_on_road(temp_rect_y):
                 player_rect.y = new_y
+                state.y = new_y
 
 
 def check_gate_collision():
@@ -1138,47 +1161,65 @@ def check_gate_collision():
 def render():
     # Handle smooth transition
     if state.show_city_view:
-        # Fade in city view
+        # Fade in city view smoothly
         if state.transition_alpha < 255:
-            state.transition_alpha = min(255, state.transition_alpha + 15)  # Fade in speed
+            state.transition_alpha = min(255, state.transition_alpha + 20)
         
         SCREEN.fill((0, 0, 0))
-        draw_city_view(SCREEN)
+        try:
+            draw_city_view(SCREEN)
+        except Exception as e:
+            # Error handling for city view rendering
+            error_text = FONT.render(f"Rendering error: {str(e)}", True, (255, 0, 0))
+            SCREEN.blit(error_text, (10, 10))
         
         # Apply fade transition overlay
         if state.transition_alpha < 255:
-            fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
-            fade_overlay.fill((0, 0, 0, 255 - state.transition_alpha))
-            SCREEN.blit(fade_overlay, (0, 0), special_flags=pygame.BLEND_ALPHA_SDL2)
+            try:
+                fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
+                fade_overlay.fill((0, 0, 0, 255 - state.transition_alpha))
+                SCREEN.blit(fade_overlay, (0, 0))
+            except:
+                pass  # Skip fade if there's an issue
         return
     
     # Campus view - fade out transition overlay when returning
     if state.transition_alpha > 0:
-        state.transition_alpha = max(0, state.transition_alpha - 20)  # Faster fade out speed
+        state.transition_alpha = max(0, state.transition_alpha - 25)  # Smooth fade out
     
     # Clear screen completely first
     SCREEN.fill(BG_TOP)
     
-    # Draw campus map
-    MAP_SURF.fill((0,0,0,0))
-    draw_map(MAP_SURF)
-    draw_player(MAP_SURF)
+    # Draw campus map with error handling
+    try:
+        MAP_SURF.fill((0,0,0,0))
+        draw_map(MAP_SURF)
+        draw_player(MAP_SURF)
+    except Exception as e:
+        error_text = FONT.render(f"Map error: {str(e)}", True, (255, 0, 0))
+        MAP_SURF.blit(error_text, (10, 10))
 
-    # Draw HUD
-    HUD_SURF.fill((0,0,0,0))
-    draw_hud(HUD_SURF)
+    # Draw HUD with error handling
+    try:
+        HUD_SURF.fill((0,0,0,0))
+        draw_hud(HUD_SURF)
+    except Exception as e:
+        error_text = FONT.render(f"HUD error: {str(e)}", True, (255, 0, 0))
+        HUD_SURF.blit(error_text, (10, 10))
 
     # Blit map and hud to screen
     SCREEN.blit(MAP_SURF, (12, 20))
     SCREEN.blit(HUD_SURF, (12 + MAP_W + 20, 20))
     
     # Apply fade transition overlay when returning to campus (fades from black to campus)
-    # Only show overlay if there's actually a transition happening
     if state.transition_alpha > 0:
-        fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H))
-        fade_overlay.fill((0, 0, 0))
-        fade_overlay.set_alpha(state.transition_alpha)
-        SCREEN.blit(fade_overlay, (0, 0))
+        try:
+            fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H))
+            fade_overlay.fill((0, 0, 0))
+            fade_overlay.set_alpha(state.transition_alpha)
+            SCREEN.blit(fade_overlay, (0, 0))
+        except:
+            pass  # Skip fade if there's an issue
 
     # interact hint
     if current_overlap and not state.popup_open:
@@ -1248,52 +1289,70 @@ def handle_mouse(event):
 def main():
     global suppress_until_exit, current_overlap
     running = True
-    while running:
-        CLOCK.tick(FPS)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    if state.show_city_view:
-                        state.transition_alpha = 255  # Start fade out
-                        state.show_city_view = False
-                        toast("Returning to campus...")
-                    elif state.popup_open:
-                        close_popup()
-                if event.key == pygame.K_e:
-                    if current_overlap and not state.popup_open:
-                        open_popup_for(current_overlap['key'])
-            elif event.type in (pygame.MOUSEBUTTONUP,):
-                handle_mouse(event)
+    try:
+        while running:
+            # Maintain consistent frame rate
+            CLOCK.tick(FPS)
+            
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        if state.show_city_view:
+                            state.transition_alpha = 255  # Start fade out
+                            state.show_city_view = False
+                            toast("Returning to campus...")
+                        elif state.popup_open:
+                            close_popup()
+                    elif event.key == pygame.K_e:
+                        if current_overlap and not state.popup_open:
+                            open_popup_for(current_overlap['key'])
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    handle_mouse(event)
 
-        keys = pygame.key.get_pressed()
-        if state.show_city_view:
-            update_city_player(keys)
-            check_city_gate_collision()
-        else:
-            update_player(keys)
-            check_gate_collision()
+            # Update game state
+            try:
+                keys = pygame.key.get_pressed()
+                if state.show_city_view:
+                    update_city_player(keys)
+                    check_city_gate_collision()
+                else:
+                    update_player(keys)
+                    check_gate_collision()
 
-        ov = check_overlap()
-        if ov is None:
-            if suppress_until_exit:
-                suppress_until_exit = False
-            current_overlap = None
-        else:
-            if suppress_until_exit:
-                pass
-            else:
-                if not state.popup_open:
-                    # auto-open on new overlap
-                    if current_overlap is None or ov['key'] != current_overlap['key']:
-                        open_popup_for(ov['key'])
-            current_overlap = ov
+                ov = check_overlap()
+                if ov is None:
+                    if suppress_until_exit:
+                        suppress_until_exit = False
+                    current_overlap = None
+                else:
+                    current_overlap = ov
+                    # Popups only open on E key press or click, not automatically
 
-        render()
-        pygame.display.flip()
-
-    pygame.quit()
+                # Render frame
+                render()
+                pygame.display.flip()
+            except Exception as e:
+                # Handle runtime errors gracefully
+                print(f"Game loop error: {e}")
+                import traceback
+                traceback.print_exc()
+                # Try to continue running
+                try:
+                    render()
+                    pygame.display.flip()
+                except:
+                    running = False
+    except KeyboardInterrupt:
+        print("Game interrupted by user")
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        pygame.quit()
 
 
 if __name__ == '__main__':
