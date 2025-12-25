@@ -247,14 +247,24 @@ def check_city_gate_collision():
     if not state.show_city_view:
         return
     
+    # Prevent immediate re-triggering after entering city
+    if state.city_entry_cooldown > 0:
+        state.city_entry_cooldown -= 1
+        return
+    
     px = state.city_player_x
     
-    # SIMPLE: If player is near edges, return to campus
-    # Left edge: px < 250, Right edge: px > 950 (SCREEN_W is 1200)
-    if px < 250 or px > 950:
-        # IMMEDIATELY return to campus
+    # Check if player is actually at the gate edges (more strict boundaries)
+    # Gate width is 100, so check if player is at the actual gate areas
+    # Left gate: x < 120, Right gate: x > SCREEN_W - 120
+    left_gate_threshold = 120
+    right_gate_threshold = SCREEN_W - 120
+    
+    if px < left_gate_threshold or px > right_gate_threshold:
+        # Return to campus
         state.show_city_view = False
         state.transition_alpha = 255
+        state.city_entry_cooldown = 60  # 1 second cooldown at 60 FPS
         toast("Returning to campus...")
         
         # Set campus player position
@@ -1133,6 +1143,9 @@ def update_player(keys):
 
 def check_gate_collision():
     """Check if player collides with gate and show city view."""
+    if state.show_city_view:
+        return  # Don't check if already in city view
+    
     main_road_y = MAP_H // 2
     gate_width = 100  # Updated to match new gate size
     gate_height = 120  # Updated to match new gate size
@@ -1144,17 +1157,21 @@ def check_gate_collision():
     
     # Check collision with gates (using center point for better detection)
     px, py = player_rect.centerx, player_rect.centery
-    if (left_gate_rect.collidepoint(px, py) or right_gate_rect.collidepoint(px, py)):
+    left_collision = left_gate_rect.collidepoint(px, py)
+    right_collision = right_gate_rect.collidepoint(px, py)
+    
+    if left_collision or right_collision:
         if not state.show_city_view:
             state.show_city_view = True
             state.transition_alpha = 0  # Start transition
+            state.city_entry_cooldown = 60  # 1 second cooldown at 60 FPS
             toast("Entering the city...")
             # Set city player position based on which gate was used
             road_center_y = SCREEN_H - 50  # City road center Y
-            if left_gate_rect.collidepoint(px, py):  # Left gate
-                state.city_player_x = 150  # Start near left gate
+            if left_collision:  # Left gate
+                state.city_player_x = 400  # Start in safe zone, not too close to gate
             else:  # Right gate
-                state.city_player_x = SCREEN_W - 150  # Start near right gate
+                state.city_player_x = SCREEN_W - 400  # Start in safe zone, not too close to gate
             state.city_player_y = road_center_y  # On the road
 
 

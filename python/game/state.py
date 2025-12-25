@@ -49,6 +49,7 @@ class GameState:
         self.city_car_positions = [100, 300, 500, 700, 900]  # Initial car positions
         self.city_player_x = 600  # Start player in center of city road (SCREEN_W/2 = 600)
         self.city_player_y = 525  # On the city road (SCREEN_H - 75 = 525)
+        self.city_entry_cooldown = 0  # Cooldown to prevent immediate re-triggering
 
     def reset(self):
         self.__init__()
