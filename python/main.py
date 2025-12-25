@@ -16,9 +16,9 @@ SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 pygame.display.set_caption("Freshman Quest — Python Edition")
 CLOCK = pygame.time.Clock()
 
-FONT = pygame.font.SysFont("Segoe UI", 18)
-FONT_SM = pygame.font.SysFont("Segoe UI", 14)
-FONT_LG = pygame.font.SysFont("Segoe UI", 22, bold=True)
+FONT = pygame.font.SysFont("Segoe UI", 18, bold=False)
+FONT_SM = pygame.font.SysFont("Segoe UI", 15, bold=False)
+FONT_LG = pygame.font.SysFont("Segoe UI", 24, bold=True)
 FONTS = { 'font': FONT, 'font_sm': FONT_SM, 'font_lg': FONT_LG }
 
 state = GameState()
@@ -54,6 +54,12 @@ def is_on_road(x, y, road_width=50, side_road_width=40, margin=0):
             else:
                 if main_road_y <= y <= gate_y:
                     return True
+        
+        # Allow player to be near building doors (extend road area around doors)
+        door_proximity = 40  # Extended area around doors for entry
+        distance_to_door = ((x - gate_x)**2 + (y - gate_y)**2)**0.5
+        if distance_to_door <= door_proximity:
+            return True
     
     return False
 
@@ -145,10 +151,13 @@ def draw_gates(surface: pygame.Surface):
     
     # Gate sign
     sign_text = FONT.render("EXIT", True, BLACK)
-    sign_bg = Rect(left_gate_x + gate_width//2 - sign_text.get_width()//2 - 5, arch_top - 8, 
-                  sign_text.get_width() + 10, sign_text.get_height() + 6)
-    pygame.draw.rect(surface, WHITE, sign_bg, border_radius=3)
-    pygame.draw.rect(surface, BLACK, sign_bg, 2, border_radius=3)
+    sign_bg = Rect(left_gate_x + gate_width//2 - sign_text.get_width()//2 - 6, arch_top - 8, 
+                  sign_text.get_width() + 12, sign_text.get_height() + 6)
+    pygame.draw.rect(surface, WHITE, sign_bg, border_radius=4)
+    pygame.draw.rect(surface, BLACK, sign_bg, 2, border_radius=4)
+    # Text shadow for depth
+    sign_shadow = FONT.render("EXIT", True, (100, 100, 100, 100))
+    surface.blit(sign_shadow, (left_gate_x + gate_width//2 - sign_text.get_width()//2 + 1, arch_top - 4))
     surface.blit(sign_text, (left_gate_x + gate_width//2 - sign_text.get_width()//2, arch_top - 5))
     
     # Right gate
@@ -168,10 +177,13 @@ def draw_gates(surface: pygame.Surface):
     pygame.draw.arc(surface, gate_dark, Rect(right_gate_x + 2, arch_top - 18, gate_width - 4, 36), 0, 3.14, 8)
     
     sign_text2 = FONT.render("EXIT", True, BLACK)
-    sign_bg2 = Rect(right_gate_x + gate_width//2 - sign_text2.get_width()//2 - 5, arch_top - 8, 
-                   sign_text2.get_width() + 10, sign_text2.get_height() + 6)
-    pygame.draw.rect(surface, WHITE, sign_bg2, border_radius=3)
-    pygame.draw.rect(surface, BLACK, sign_bg2, 2, border_radius=3)
+    sign_bg2 = Rect(right_gate_x + gate_width//2 - sign_text2.get_width()//2 - 6, arch_top - 8, 
+                   sign_text2.get_width() + 12, sign_text2.get_height() + 6)
+    pygame.draw.rect(surface, WHITE, sign_bg2, border_radius=4)
+    pygame.draw.rect(surface, BLACK, sign_bg2, 2, border_radius=4)
+    # Text shadow for depth
+    sign_shadow2 = FONT.render("EXIT", True, (100, 100, 100, 100))
+    surface.blit(sign_shadow2, (right_gate_x + gate_width//2 - sign_text2.get_width()//2 + 1, arch_top - 4))
     surface.blit(sign_text2, (right_gate_x + gate_width//2 - sign_text2.get_width()//2, arch_top - 5))
     
     return left_gate_rect, right_gate_rect
@@ -264,10 +276,13 @@ def draw_city_gates(surface: pygame.Surface):
     pygame.draw.arc(surface, gate_color, Rect(left_gate_x, arch_top - 15, gate_width, 30), 0, 3.14, 10)
     
     sign_text = FONT_SM.render("CAMPUS", True, BLACK)
-    sign_bg = Rect(left_gate_x + gate_width//2 - sign_text.get_width()//2 - 5, arch_top - 5, 
-                  sign_text.get_width() + 10, sign_text.get_height() + 4)
-    pygame.draw.rect(surface, WHITE, sign_bg, border_radius=3)
-    pygame.draw.rect(surface, BLACK, sign_bg, 2, border_radius=3)
+    sign_bg = Rect(left_gate_x + gate_width//2 - sign_text.get_width()//2 - 6, arch_top - 5, 
+                  sign_text.get_width() + 12, sign_text.get_height() + 4)
+    pygame.draw.rect(surface, WHITE, sign_bg, border_radius=4)
+    pygame.draw.rect(surface, BLACK, sign_bg, 2, border_radius=4)
+    # Text shadow
+    sign_shadow = FONT_SM.render("CAMPUS", True, (100, 100, 100, 100))
+    surface.blit(sign_shadow, (left_gate_x + gate_width//2 - sign_text.get_width()//2 + 1, arch_top - 2))
     surface.blit(sign_text, (left_gate_x + gate_width//2 - sign_text.get_width()//2, arch_top - 3))
     
     # Right gate
@@ -280,10 +295,13 @@ def draw_city_gates(surface: pygame.Surface):
     pygame.draw.arc(surface, gate_color, Rect(right_gate_x, arch_top - 15, gate_width, 30), 0, 3.14, 10)
     
     sign_text2 = FONT_SM.render("CAMPUS", True, BLACK)
-    sign_bg2 = Rect(right_gate_x + gate_width//2 - sign_text2.get_width()//2 - 5, arch_top - 5, 
-                   sign_text2.get_width() + 10, sign_text2.get_height() + 4)
-    pygame.draw.rect(surface, WHITE, sign_bg2, border_radius=3)
-    pygame.draw.rect(surface, BLACK, sign_bg2, 2, border_radius=3)
+    sign_bg2 = Rect(right_gate_x + gate_width//2 - sign_text2.get_width()//2 - 6, arch_top - 5, 
+                   sign_text2.get_width() + 12, sign_text2.get_height() + 4)
+    pygame.draw.rect(surface, WHITE, sign_bg2, border_radius=4)
+    pygame.draw.rect(surface, BLACK, sign_bg2, 2, border_radius=4)
+    # Text shadow
+    sign_shadow2 = FONT_SM.render("CAMPUS", True, (100, 100, 100, 100))
+    surface.blit(sign_shadow2, (right_gate_x + gate_width//2 - sign_text2.get_width()//2 + 1, arch_top - 2))
     surface.blit(sign_text2, (right_gate_x + gate_width//2 - sign_text2.get_width()//2, arch_top - 3))
 
 
@@ -422,12 +440,20 @@ def draw_city_view(surface: pygame.Surface):
                     window_color = (255, 255, 200) if random.random() > 0.5 else (200, 200, 150)
                     pygame.draw.rect(surface, window_color, Rect(wx, wy, 15, 20))
         
-        # Building name sign
+        # Building name sign with improved styling
         name_text = FONT_SM.render(building['name'], True, WHITE)
-        name_bg = Rect(building_rect.centerx - name_text.get_width()//2 - 5, 
-                      building_rect.bottom - 30, name_text.get_width() + 10, name_text.get_height() + 4)
-        pygame.draw.rect(surface, (0, 0, 0, 200), name_bg, border_radius=3)
-        pygame.draw.rect(surface, WHITE, name_bg, 1, border_radius=3)
+        name_bg = Rect(building_rect.centerx - name_text.get_width()//2 - 8, 
+                      building_rect.bottom - 30, name_text.get_width() + 16, name_text.get_height() + 6)
+        # Enhanced background
+        name_bg_surf = pygame.Surface((name_bg.w, name_bg.h), pygame.SRCALPHA)
+        name_bg_surf.fill((0, 0, 0, 220))
+        surface.blit(name_bg_surf, name_bg)
+        # Border
+        pygame.draw.rect(surface, (255, 255, 255, 200), name_bg, 2, border_radius=4)
+        # Text shadow
+        shadow_text = FONT_SM.render(building['name'], True, (0, 0, 0, 150))
+        surface.blit(shadow_text, (building_rect.centerx - name_text.get_width()//2 + 1, building_rect.bottom - 27))
+        # Main text
         surface.blit(name_text, (building_rect.centerx - name_text.get_width()//2, building_rect.bottom - 28))
     
     # More buildings on right side
@@ -499,18 +525,32 @@ def draw_city_view(surface: pygame.Surface):
         pygame.draw.rect(surface, (255, 215, 0), hint_bg, 2, border_radius=6)
         surface.blit(hint_text, (px - hint_text.get_width()//2, py - 36))
     
-    # Title text
+    # Title text with enhanced styling
     title_text = FONT_LG.render("Welcome to the City!", True, WHITE)
+    title_shadow = FONT_LG.render("Welcome to the City!", True, (0, 0, 0, 150))
     title_bg = Rect(SCREEN_W//2 - title_text.get_width()//2 - 20, 50, 
                    title_text.get_width() + 40, title_text.get_height() + 20)
-    pygame.draw.rect(surface, (0, 0, 0, 180), title_bg, border_radius=10)
+    title_bg_surf = pygame.Surface((title_bg.w, title_bg.h), pygame.SRCALPHA)
+    title_bg_surf.fill((0, 0, 0, 200))
+    surface.blit(title_bg_surf, title_bg)
+    pygame.draw.rect(surface, (255, 255, 255, 180), title_bg, 2, border_radius=10)
+    # Shadow
+    surface.blit(title_shadow, (SCREEN_W//2 - title_text.get_width()//2 + 2, 62))
+    # Main text
     surface.blit(title_text, (SCREEN_W//2 - title_text.get_width()//2, 60))
     
-    # Instructions
+    # Instructions with enhanced styling
     return_text = FONT_SM.render("Walk to gate to return to campus", True, WHITE)
+    return_shadow = FONT_SM.render("Walk to gate to return to campus", True, (0, 0, 0, 150))
     return_bg = Rect(SCREEN_W//2 - return_text.get_width()//2 - 20, SCREEN_H - 40, 
                     return_text.get_width() + 40, return_text.get_height() + 10)
-    pygame.draw.rect(surface, (0, 0, 0, 180), return_bg, border_radius=8)
+    return_bg_surf = pygame.Surface((return_bg.w, return_bg.h), pygame.SRCALPHA)
+    return_bg_surf.fill((0, 0, 0, 200))
+    surface.blit(return_bg_surf, return_bg)
+    pygame.draw.rect(surface, (255, 255, 255, 150), return_bg, 2, border_radius=8)
+    # Shadow
+    surface.blit(return_shadow, (SCREEN_W//2 - return_text.get_width()//2 + 1, SCREEN_H - 34))
+    # Main text
     surface.blit(return_text, (SCREEN_W//2 - return_text.get_width()//2, SCREEN_H - 35))
 
 
@@ -721,18 +761,23 @@ def draw_building(surface: pygame.Surface, b):
             # Window sill
             pygame.draw.rect(surface, (100, 90, 80), Rect(wx-2, wy+wh, ww+4, 2))
     
-    # Building name sign
+    # Building name sign with improved styling
     building_name = b.get('name', 'Building')
     name_text = FONT_SM.render(building_name, True, WHITE)
     # Position name above the door or on the building front
     name_y = rect.y + 25
-    name_bg = Rect(rect.centerx - name_text.get_width()//2 - 5, 
-                  name_y - 2, name_text.get_width() + 10, name_text.get_height() + 4)
-    # Semi-transparent black background for readability
+    name_bg = Rect(rect.centerx - name_text.get_width()//2 - 8, 
+                  name_y - 3, name_text.get_width() + 16, name_text.get_height() + 6)
+    # Enhanced semi-transparent background for better readability
     name_bg_surf = pygame.Surface((name_bg.w, name_bg.h), pygame.SRCALPHA)
-    name_bg_surf.fill((0, 0, 0, 180))
+    name_bg_surf.fill((0, 0, 0, 220))
     surface.blit(name_bg_surf, name_bg)
-    pygame.draw.rect(surface, WHITE, name_bg, 1, border_radius=3)
+    # Border with rounded corners
+    pygame.draw.rect(surface, (255, 255, 255, 200), name_bg, 2, border_radius=4)
+    # Text shadow for depth
+    shadow_text = FONT_SM.render(building_name, True, (0, 0, 0, 150))
+    surface.blit(shadow_text, (rect.centerx - name_text.get_width()//2 + 1, name_y + 1))
+    # Main text
     surface.blit(name_text, (rect.centerx - name_text.get_width()//2, name_y))
 
 
@@ -760,37 +805,64 @@ def draw_hud(surface: pygame.Surface):
     pygame.draw.rect(surface, BORDER, Rect(0,0,HUD_W, MAP_H), 1, border_radius=14)
 
     y = 12
+    # Title with shadow
     title = FONT_LG.render("Freshman Quest", True, TEXT)
-    surface.blit(title, (14,y)); y += 30
+    title_shadow = FONT_LG.render("Freshman Quest", True, (0, 0, 0, 80))
+    surface.blit(title_shadow, (16, y+2))
+    surface.blit(title, (14, y)); y += 32
 
     # Stats panel
     stats_y = y
     pygame.draw.rect(surface, PANEL, Rect(12, stats_y, HUD_W-24, 120), border_radius=12)
     pygame.draw.rect(surface, BORDER, Rect(12, stats_y, HUD_W-24, 120), 1, border_radius=12)
-    y += 10
-    surface.blit(FONT.render(f"XP: {state.xp}", True, TEXT), (24, y)); y += 22
-    surface.blit(FONT.render(f"Rank: {state.rank_for_xp()}", True, TEXT), (24, y)); y += 22
-    surface.blit(FONT.render("Energy:", True, TEXT), (24, y));
+    y += 12
+    # XP with shadow
+    xp_text = FONT.render(f"XP: {state.xp}", True, TEXT)
+    xp_shadow = FONT.render(f"XP: {state.xp}", True, (0, 0, 0, 60))
+    surface.blit(xp_shadow, (26, y+1))
+    surface.blit(xp_text, (24, y)); y += 24
+    # Rank with shadow
+    rank_text = FONT.render(f"Rank: {state.rank_for_xp()}", True, TEXT)
+    rank_shadow = FONT.render(f"Rank: {state.rank_for_xp()}", True, (0, 0, 0, 60))
+    surface.blit(rank_shadow, (26, y+1))
+    surface.blit(rank_text, (24, y)); y += 24
+    # Energy with shadow
+    energy_label = FONT.render("Energy:", True, TEXT)
+    energy_shadow = FONT.render("Energy:", True, (0, 0, 0, 60))
+    surface.blit(energy_shadow, (26, y+1))
+    surface.blit(energy_label, (24, y));
     draw_energy_bar(surface, 100, y+4, HUD_W-24-100, 14, state.energy/100.0)
-    surface.blit(FONT_SM.render(f"{state.energy}", True, MUTED), (HUD_W-50, y));
+    energy_val = FONT_SM.render(f"{state.energy}", True, MUTED)
+    energy_val_shadow = FONT_SM.render(f"{state.energy}", True, (0, 0, 0, 60))
+    surface.blit(energy_val_shadow, (HUD_W-49, y+1))
+    surface.blit(energy_val, (HUD_W-50, y));
     y = stats_y + 120 + 12
 
     # Inventory panel
     inv_h = 140
     pygame.draw.rect(surface, PANEL, Rect(12, y, HUD_W-24, inv_h), border_radius=12)
     pygame.draw.rect(surface, BORDER, Rect(12, y, HUD_W-24, inv_h), 1, border_radius=12)
-    surface.blit(FONT.render("Inventory", True, TEXT), (24, y+8))
-    iy = y + 36
+    inv_title = FONT.render("Inventory", True, TEXT)
+    inv_title_shadow = FONT.render("Inventory", True, (0, 0, 0, 60))
+    surface.blit(inv_title_shadow, (26, y+9))
+    surface.blit(inv_title, (24, y+8))
+    iy = y + 38
     for item in sorted(list(state.inventory))[:8]:
-        surface.blit(FONT_SM.render(f"• {item}", True, TEXT), (24, iy)); iy += 20
+        item_text = FONT_SM.render(f"• {item}", True, TEXT)
+        item_shadow = FONT_SM.render(f"• {item}", True, (0, 0, 0, 50))
+        surface.blit(item_shadow, (26, iy+1))
+        surface.blit(item_text, (24, iy)); iy += 22
     y += inv_h + 12
 
     # Quests panel
     quests_h = MAP_H - y - 12
     pygame.draw.rect(surface, PANEL, Rect(12, y, HUD_W-24, quests_h), border_radius=12)
     pygame.draw.rect(surface, BORDER, Rect(12, y, HUD_W-24, quests_h), 1, border_radius=12)
-    surface.blit(FONT.render("Quests", True, TEXT), (24, y+8))
-    qy = y + 36
+    quests_title = FONT.render("Quests", True, TEXT)
+    quests_title_shadow = FONT.render("Quests", True, (0, 0, 0, 60))
+    surface.blit(quests_title_shadow, (26, y+9))
+    surface.blit(quests_title, (24, y+8))
+    qy = y + 38
     for key, label in [
         ('firstClass','Attend your first class'),
         ('studentId','Get your student ID'),
@@ -805,7 +877,11 @@ def draw_hud(surface: pygame.Surface):
     ]:
         done = state.quests.get(key, False)
         check = '☑' if done else '☐'
-        surface.blit(FONT_SM.render(f"{check} {label}", True, (6,95,70) if done else TEXT), (24, qy)); qy += 20
+        quest_color = (6, 95, 70) if done else TEXT
+        quest_text = FONT_SM.render(f"{check} {label}", True, quest_color)
+        quest_shadow = FONT_SM.render(f"{check} {label}", True, (0, 0, 0, 50))
+        surface.blit(quest_shadow, (26, qy+1))
+        surface.blit(quest_text, (24, qy)); qy += 22
 
 
 def clamp(v, lo, hi):
@@ -815,8 +891,18 @@ def clamp(v, lo, hi):
 def check_overlap():
     global current_overlap
     ov = None
+    px, py = player_rect.centerx, player_rect.centery
+    # Check proximity to building doors (doors are at bottom center of buildings)
     for b in buildings:
-        if player_rect.colliderect(b['rect']):
+        building_rect = b['rect']
+        door_x = building_rect.centerx
+        door_y = building_rect.bottom
+        # Check if player is near the door (within reasonable distance)
+        # Allow entry if player is close to door or overlapping building
+        door_proximity = 35  # Distance threshold for door entry
+        distance_to_door = ((px - door_x)**2 + (py - door_y)**2)**0.5
+        
+        if distance_to_door <= door_proximity or player_rect.colliderect(building_rect):
             ov = b
             break
     if ov is None:
@@ -1099,9 +1185,17 @@ def render():
         bx = 12 + current_overlap['rect'].x + current_overlap['rect'].w//2
         by = 20 + current_overlap['rect'].y - 12
         tip = FONT_SM.render("Press E or Click", True, WHITE)
-        pad = 6
+        tip_shadow = FONT_SM.render("Press E or Click", True, (0, 0, 0, 150))
+        pad = 8
         bg_rect = Rect(bx - tip.get_width()//2 - pad, by - tip.get_height()//2 - pad, tip.get_width()+pad*2, tip.get_height()+pad*2)
-        pygame.draw.rect(SCREEN, BLACK, bg_rect, border_radius=12)
+        # Enhanced background
+        bg_surf = pygame.Surface((bg_rect.w, bg_rect.h), pygame.SRCALPHA)
+        bg_surf.fill((0, 0, 0, 220))
+        SCREEN.blit(bg_surf, bg_rect)
+        pygame.draw.rect(SCREEN, (255, 255, 255, 150), bg_rect, 2, border_radius=12)
+        # Shadow
+        SCREEN.blit(tip_shadow, (bg_rect.x+pad+1, bg_rect.y+pad+1))
+        # Main text
         SCREEN.blit(tip, (bg_rect.x+pad, bg_rect.y+pad))
 
     # popup
@@ -1121,8 +1215,16 @@ def render():
         card = Rect((SCREEN_W-520)//2, (SCREEN_H-220)//2, 520, 220)
         pygame.draw.rect(SCREEN, PANEL, card, border_radius=16)
         pygame.draw.rect(SCREEN, BORDER, card, 1, border_radius=16)
-        SCREEN.blit(FONT_LG.render("Freshman Master Badge Earned!", True, TEXT), (card.x+18, card.y+16))
-        SCREEN.blit(FONT.render("All orientation tasks completed. +100 XP", True, MUTED), (card.x+18, card.y+58))
+        # Badge title with shadow
+        badge_title = FONT_LG.render("Freshman Master Badge Earned!", True, TEXT)
+        badge_title_shadow = FONT_LG.render("Freshman Master Badge Earned!", True, (0, 0, 0, 100))
+        SCREEN.blit(badge_title_shadow, (card.x+19, card.y+17))
+        SCREEN.blit(badge_title, (card.x+18, card.y+16))
+        # Badge description with shadow
+        badge_desc = FONT.render("All orientation tasks completed. +100 XP", True, MUTED)
+        badge_desc_shadow = FONT.render("All orientation tasks completed. +100 XP", True, (0, 0, 0, 80))
+        SCREEN.blit(badge_desc_shadow, (card.x+19, card.y+59))
+        SCREEN.blit(badge_desc, (card.x+18, card.y+58))
         btn = Button(Rect(card.x+18, card.y+140, 150, 38), "Play Again", on_click=lambda: state.reset(), primary=True)
         btn.draw(SCREEN, FONT)
 
