@@ -833,10 +833,8 @@ def draw_hud(surface: pygame.Surface):
     pygame.draw.rect(surface, BORDER, Rect(0,0,HUD_W, MAP_H), 1, border_radius=14)
 
     y = 12
-    # Title with shadow
-    title = FONT_LG.render("Freshman Quest", True, TEXT)
-    title_shadow = FONT_LG.render("Freshman Quest", True, (0, 0, 0, 80))
-    surface.blit(title_shadow, (16, y+2))
+    # Title - clear and sharp, no shadow
+    title = FONT_LG.render("Freshman Quest", True, (31, 41, 55))  # Use TEXT color, not deep black
     surface.blit(title, (14, y)); y += 32
 
     # Stats panel
@@ -844,25 +842,17 @@ def draw_hud(surface: pygame.Surface):
     pygame.draw.rect(surface, PANEL, Rect(12, stats_y, HUD_W-24, 120), border_radius=12)
     pygame.draw.rect(surface, BORDER, Rect(12, stats_y, HUD_W-24, 120), 1, border_radius=12)
     y += 12
-    # XP with shadow
-    xp_text = FONT.render(f"XP: {state.xp}", True, TEXT)
-    xp_shadow = FONT.render(f"XP: {state.xp}", True, (0, 0, 0, 60))
-    surface.blit(xp_shadow, (26, y+1))
+    # XP - clear and sharp, no shadow
+    xp_text = FONT.render(f"XP: {state.xp}", True, (0, 0, 0))  # Pure black for clarity
     surface.blit(xp_text, (24, y)); y += 24
-    # Rank with shadow
-    rank_text = FONT.render(f"Rank: {state.rank_for_xp()}", True, TEXT)
-    rank_shadow = FONT.render(f"Rank: {state.rank_for_xp()}", True, (0, 0, 0, 60))
-    surface.blit(rank_shadow, (26, y+1))
+    # Rank - clear and sharp, no shadow
+    rank_text = FONT.render(f"Rank: {state.rank_for_xp()}", True, (0, 0, 0))  # Pure black for clarity
     surface.blit(rank_text, (24, y)); y += 24
-    # Energy with shadow
-    energy_label = FONT.render("Energy:", True, TEXT)
-    energy_shadow = FONT.render("Energy:", True, (0, 0, 0, 60))
-    surface.blit(energy_shadow, (26, y+1))
+    # Energy - clear and sharp, no shadow
+    energy_label = FONT.render("Energy:", True, (0, 0, 0))  # Pure black for clarity
     surface.blit(energy_label, (24, y));
     draw_energy_bar(surface, 100, y+4, HUD_W-24-100, 14, state.energy/100.0)
-    energy_val = FONT_SM.render(f"{state.energy}", True, MUTED)
-    energy_val_shadow = FONT_SM.render(f"{state.energy}", True, (0, 0, 0, 60))
-    surface.blit(energy_val_shadow, (HUD_W-49, y+1))
+    energy_val = FONT_SM.render(f"{state.energy}", True, (0, 0, 0))  # Pure black for clarity, no shadow
     surface.blit(energy_val, (HUD_W-50, y));
     y = stats_y + 120 + 12
 
@@ -870,15 +860,11 @@ def draw_hud(surface: pygame.Surface):
     inv_h = 140
     pygame.draw.rect(surface, PANEL, Rect(12, y, HUD_W-24, inv_h), border_radius=12)
     pygame.draw.rect(surface, BORDER, Rect(12, y, HUD_W-24, inv_h), 1, border_radius=12)
-    inv_title = FONT.render("Inventory", True, TEXT)
-    inv_title_shadow = FONT.render("Inventory", True, (0, 0, 0, 60))
-    surface.blit(inv_title_shadow, (26, y+9))
+    inv_title = FONT.render("Inventory", True, (0, 0, 0))  # Pure black for clarity, no shadow
     surface.blit(inv_title, (24, y+8))
     iy = y + 38
     for item in sorted(list(state.inventory))[:8]:
-        item_text = FONT_SM.render(f"• {item}", True, TEXT)
-        item_shadow = FONT_SM.render(f"• {item}", True, (0, 0, 0, 50))
-        surface.blit(item_shadow, (26, iy+1))
+        item_text = FONT_SM.render(f"• {item}", True, (0, 0, 0))  # Pure black for clarity, no shadow
         surface.blit(item_text, (24, iy)); iy += 22
     y += inv_h + 12
 
@@ -886,9 +872,7 @@ def draw_hud(surface: pygame.Surface):
     quests_h = MAP_H - y - 12
     pygame.draw.rect(surface, PANEL, Rect(12, y, HUD_W-24, quests_h), border_radius=12)
     pygame.draw.rect(surface, BORDER, Rect(12, y, HUD_W-24, quests_h), 1, border_radius=12)
-    quests_title = FONT.render("Quests", True, TEXT)
-    quests_title_shadow = FONT.render("Quests", True, (0, 0, 0, 60))
-    surface.blit(quests_title_shadow, (26, y+9))
+    quests_title = FONT.render("Quests", True, (0, 0, 0))  # Pure black for clarity, no shadow
     surface.blit(quests_title, (24, y+8))
     qy = y + 38
     quest_item_height = 28
