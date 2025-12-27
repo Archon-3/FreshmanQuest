@@ -32,7 +32,7 @@ def get_font(size, bold=False):
     return pygame.font.Font(None, size)
 
 FONT = get_font(18, bold=False)
-FONT_SM = get_font(15, bold=False)
+FONT_SM = get_font(16, bold=True)  # Increased size and made bold for better clarity
 FONT_LG = get_font(24, bold=True)
 FONTS = { 'font': FONT, 'font_sm': FONT_SM, 'font_lg': FONT_LG }
 
@@ -891,6 +891,9 @@ def draw_hud(surface: pygame.Surface):
     surface.blit(quests_title_shadow, (26, y+9))
     surface.blit(quests_title, (24, y+8))
     qy = y + 38
+    quest_item_height = 28
+    quest_item_width = HUD_W - 36
+    
     for key, label in [
         ('firstClass','Attend your first class'),
         ('studentId','Get your student ID'),
@@ -904,12 +907,45 @@ def draw_hud(surface: pygame.Surface):
         ('completeDepartmentCourses','Finish department courses'),
     ]:
         done = state.quests.get(key, False)
-        check = '☑' if done else '☐'
-        quest_color = (6, 95, 70) if done else TEXT
-        quest_text = FONT_SM.render(f"{check} {label}", True, quest_color)
-        quest_shadow = FONT_SM.render(f"{check} {label}", True, (0, 0, 0, 50))
-        surface.blit(quest_shadow, (26, qy+1))
-        surface.blit(quest_text, (24, qy)); qy += 22
+        
+        # Button background rectangle
+        quest_rect = Rect(18, qy, quest_item_width, quest_item_height)
+        
+        # Different styling for completed vs incomplete quests
+        if done:
+            # Completed quest - green tinted background
+            bg_color = (240, 253, 250)  # Light green background
+            border_color = (16, 185, 129)  # Success green border
+            text_color = (6, 95, 70)  # Dark green text
+            check_symbol = '✓'
+        else:
+            # Incomplete quest - light gray background
+            bg_color = (249, 250, 251)  # Very light gray background
+            border_color = (229, 231, 235)  # Light gray border
+            text_color = (31, 41, 55)  # Dark gray text
+            check_symbol = '○'
+        
+        # Draw button background with rounded corners
+        pygame.draw.rect(surface, bg_color, quest_rect, border_radius=6)
+        # Draw border
+        pygame.draw.rect(surface, border_color, quest_rect, width=1, border_radius=6)
+        
+        # Add subtle highlight at top for depth
+        highlight_rect = Rect(quest_rect.x, quest_rect.y, quest_rect.w, 2)
+        highlight_color = (255, 255, 255, 100) if done else (255, 255, 255, 60)
+        highlight_surf = pygame.Surface((quest_rect.w, 2), pygame.SRCALPHA)
+        highlight_surf.fill(highlight_color)
+        surface.blit(highlight_surf, highlight_rect)
+        
+        # Render checkbox/checkmark with better styling
+        check_text = FONT_SM.render(check_symbol, True, border_color if done else (156, 163, 175))
+        surface.blit(check_text, (24, qy + 6))
+        
+        # Render quest label text
+        quest_text = FONT_SM.render(label, True, text_color)
+        surface.blit(quest_text, (42, qy + 6))
+        
+        qy += quest_item_height + 4  # Spacing between quest items
 
 
 def clamp(v, lo, hi):
