@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Freshman Quest – Campus Explorer Edition</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout">
+    <div id="map">
+      <div id="player" class="player"></div>
+
+      <div id="hint" class="hint">Use Arrow Keys to move. Press E or click a building to interact.</div>
+      <div id="interactPrompt" class="interact hidden">Press E or Click</div>
+
+      <div class="location dorm" data-location="dorm" style="left:40px;top:420px;width:160px;height:120px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
+        <span class="label">Dormitory</span>
+      </div>
+
+      <div class="location classroom" data-location="classroom" style="left:80px;top:70px;width:200px;height:120px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
+        <span class="label">Classroom</span>
+      </div>
+
+      <div class="location library" data-location="library" style="left:600px;top:60px;width:220px;height:140px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
+        <span class="label">Library</span>
+      </div>
+
+      <div class="location cafeteria" data-location="cafeteria" style="left:540px;top:320px;width:220px;height:140px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
+        <span class="label">Cafeteria</span>
+      </div>
+
+      <div class="location admin" data-location="admin" style="left:260px;top:320px;width:220px;height:120px;">
+        <div class="windows-grid">
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+          <div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div><div class="window-tile"></div>
+        </div>
+        <span class="label">Admin Office</span>
+      </div>
+
+      <div id="toasts" class="toasts"></div>
+
+      <div class="dpad" id="dpad">
+        <div></div>
+        <button data-dir="up">↑</button>
+        <div></div>
+        <button data-dir="left">←</button>
+        <div></div>
+        <button data-dir="right">→</button>
+        <div></div>
+        <button data-dir="down">↓</button>
+        <div></div>
+      </div>
+    </div>
+
+    <aside id="hud">
+      <h1>Freshman Quest</h1>
+      <div class="stats">
+        <div><span>XP:</span> <span id="xp">0</span></div>
+        <div><span>Rank:</span> <span id="rank">Rookie</span></div>
+        <div class="energy">
+          <span>Energy:</span>
+          <div class="bar"><div id="energyBar" class="fill" style="width:80%"></div></div>
+          <span id="energyText">80</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Inventory</h2>
+        <ul id="inventory"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Quests</h2>
+        <ul id="quests">
+          <li data-quest="firstClass"><span class="checkbox"></span> Attend your first class</li>
+          <li data-quest="studentId"><span class="checkbox"></span> Get your student ID</li>
+          <li data-quest="libraryVisit"><span class="checkbox"></span> Visit the library</li>
+          <li data-quest="timetable"><span class="checkbox"></span> Collect your timetable</li>
+          <li data-quest="eatMeal"><span class="checkbox"></span> Eat at the cafeteria</li>
+          <li data-quest="chooseSchool"><span class="checkbox"></span> Choose your school</li>
+          <li data-quest="programOrientation"><span class="checkbox"></span> Complete program orientation</li>
+          <li data-quest="completeProgramCourses"><span class="checkbox"></span> Finish program core courses</li>
+          <li data-quest="chooseDepartment"><span class="checkbox"></span> Choose your department</li>
+          <li data-quest="completeDepartmentCourses"><span class="checkbox"></span> Finish department courses</li>
+        </ul>
+      </div>
+
+      <div class="panel">
+        <h2>Help</h2>
+        <div>Move with Arrow Keys. Interact with E or by clicking a building. Close popups with Esc.</div>
+      </div>
+    </aside>
+  </div>
+
+  <div id="popup" class="popup hidden">
+    <div class="popup-card">
+      <div class="popup-header">
+        <h3 id="popupTitle"></h3>
+        <button id="popupClose" class="close">✕</button>
+      </div>
+      <div id="popupBody" class="popup-body"></div>
+    </div>
+  </div>
+
+  <div id="victory" class="victory hidden">
+    <div class="victory-card">
+      <h2>Freshman Master Badge Earned!</h2>
+      <p>All orientation tasks completed. +100 XP</p>
+      <button id="victoryClose">Play Again</button>
+    </div>
+  </div>
+
+  <script src="src/ui/dorm.js" defer></script>
+  <script src="src/ui/classroom.js" defer></script>
+  <script src="src/ui/library.js" defer></script>
+  <script src="src/ui/cafeteria.js" defer></script>
+  <script src="src/ui/admin.js" defer></script>
+  <script>window.PHASER_MODE = true;</script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js" defer></script>
+  <script src="src/core/game.js" defer></script>
+  <script src="src/engine/phaser-scene.js" defer></script>
+</body>
+</html>
+
