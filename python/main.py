@@ -1,7 +1,6 @@
 import os
 import sys
 import random
-import math
 import pygame
 from pygame import Rect
 
@@ -86,14 +85,7 @@ for _ in range(15):
         cy = main_road_y + random.randint(-20, 20)
         # Ensure point is on road
         if is_on_road(cx, cy):
-            COLLECTIBLES.append({
-                'x': cx, 
-                'y': cy, 
-                'collected': False,
-                'base_y': cy,  # Original Y position for floating animation
-                'anim_offset': random.uniform(0, 6.28),  # Random animation phase
-                'collect_anim': None  # Collection animation state (frames remaining)
-            })
+            COLLECTIBLES.append({'x': cx, 'y': cy, 'collected': False})
             break
 # Generate points on vertical roads to buildings
 for b in buildings:
@@ -105,27 +97,13 @@ for b in buildings:
         for _ in range(2):
             cy = random.randint(gate_y + 20, main_road_y - 20)
             if is_on_road(gate_x, cy):
-                COLLECTIBLES.append({
-                    'x': gate_x + random.randint(-15, 15), 
-                    'y': cy, 
-                    'collected': False,
-                    'base_y': cy,
-                    'anim_offset': random.uniform(0, 6.28),
-                    'collect_anim': None
-                })
+                COLLECTIBLES.append({'x': gate_x + random.randint(-15, 15), 'y': cy, 'collected': False})
     else:
         # Building below main road
         for _ in range(2):
             cy = random.randint(main_road_y + 20, gate_y - 20)
             if is_on_road(gate_x, cy):
-                COLLECTIBLES.append({
-                    'x': gate_x + random.randint(-15, 15), 
-                    'y': cy, 
-                    'collected': False,
-                    'base_y': cy,
-                    'anim_offset': random.uniform(0, 6.28),
-                    'collect_anim': None
-                })
+                COLLECTIBLES.append({'x': gate_x + random.randint(-15, 15), 'y': cy, 'collected': False})
 
 # Popup state
 active_popup = None
@@ -794,76 +772,19 @@ def draw_building(surface: pygame.Surface, b):
 
 
 def draw_collectibles(surface: pygame.Surface):
-    """Draw professional collectible coins with animation and effects."""
-    current_time = pygame.time.get_ticks()
-    
+    """Draw collectible points/coins on the roads."""
     for c in COLLECTIBLES:
-        if c['collect_anim'] is not None:
-            # Collection animation - floating up and fading
-            c['collect_anim'] -= 1
-            if c['collect_anim'] <= 0:
-                c['collected'] = True
-                c['collect_anim'] = None
-                continue
-            
-            # Draw collection effect (floating up with fade)
-            anim_progress = (20 - c['collect_anim']) / 20.0
-            px = int(c['x'])
-            py = int(c['base_y'] - anim_progress * 30)  # Float upward
-            alpha = int(255 * (1 - anim_progress))  # Fade out
-            
-            # Create surface with alpha for fading
-            coin_surf = pygame.Surface((24, 24), pygame.SRCALPHA)
-            coin_size = 8 + int(anim_progress * 4)  # Slight size increase
-            
-            # Draw glowing collection effect
-            pygame.draw.circle(coin_surf, (255, 255, 100, alpha), (12, 12), coin_size + 2)
-            pygame.draw.circle(coin_surf, (255, 215, 0, alpha), (12, 12), coin_size)
-            pygame.draw.circle(coin_surf, (255, 255, 200, alpha), (12, 12), coin_size - 3)
-            
-            surface.blit(coin_surf, (px - 12, py - 12))
-            continue
-        
         if not c['collected']:
-            # Animated floating effect
-            float_offset = math.sin(current_time * 0.003 + c['anim_offset']) * 2
-            px = int(c['x'])
-            py = int(c['base_y'] + float_offset)
-            
-            # Pulsing glow effect
-            pulse = (math.sin(current_time * 0.005 + c['anim_offset']) + 1) / 2  # 0 to 1
-            glow_size = 11 + int(pulse * 2)  # Pulsing size
-            
-            # Draw professional coin with multiple layers
-            # Outer glow (pulsing)
-            glow_surf = pygame.Surface((glow_size * 2 + 4, glow_size * 2 + 4), pygame.SRCALPHA)
-            glow_alpha = int(150 + pulse * 50)
-            pygame.draw.circle(glow_surf, (255, 215, 0, glow_alpha), 
-                             (glow_size + 2, glow_size + 2), glow_size)
-            surface.blit(glow_surf, (px - glow_size - 2, py - glow_size - 2))
-            
-            # Main coin body (gold with gradient effect)
-            pygame.draw.circle(surface, (255, 200, 50), (px, py), 9)
-            pygame.draw.circle(surface, (255, 235, 120), (px, py), 7)
-            
-            # Inner highlight (professional shine)
-            highlight_y = py - 2
-            pygame.draw.circle(surface, (255, 255, 220), (px, highlight_y), 5)
-            pygame.draw.circle(surface, (255, 255, 255), (px - 1, highlight_y - 1), 2)
-            
-            # Coin border/rim
-            pygame.draw.circle(surface, (200, 160, 40), (px, py), 9, 2)
-            
-            # Sparkle effect (rotating sparkles)
-            sparkle_angle = current_time * 0.01 + c['anim_offset']
-            for i in range(4):
-                angle = sparkle_angle + (i * 1.57)  # 4 sparkles
-                sparkle_x = px + int(math.cos(angle) * 12)
-                sparkle_y = py + int(math.sin(angle) * 12)
-                sparkle_alpha = int(100 + pulse * 100)
-                sparkle_surf = pygame.Surface((6, 6), pygame.SRCALPHA)
-                pygame.draw.circle(sparkle_surf, (255, 255, 255, sparkle_alpha), (3, 3), 2)
-                surface.blit(sparkle_surf, (sparkle_x - 3, sparkle_y - 3))
+            # Draw a glowing coin/point
+            px, py = int(c['x']), int(c['y'])
+            # Outer glow (golden)
+            pygame.draw.circle(surface, (255, 215, 0), (px, py), 10)
+            # Main coin (gold)
+            pygame.draw.circle(surface, (255, 235, 100), (px, py), 7)
+            # Inner highlight
+            pygame.draw.circle(surface, (255, 255, 200), (px, py), 4)
+            # Shadow/border
+            pygame.draw.circle(surface, (200, 170, 0), (px, py), 7, 1)
 
 
 def draw_map(surface: pygame.Surface):
@@ -1175,20 +1096,18 @@ def draw_player(surface: pygame.Surface):
 
 
 def check_collectibles():
-    """Check if player collected any points with smooth collection animation."""
+    """Check if player collected any points."""
     px, py = player_rect.centerx, player_rect.centery
-    collect_radius = 18  # Collection radius (slightly tighter for better feel)
+    collect_radius = 20  # Collection radius
     
     for c in COLLECTIBLES:
-        if not c['collected'] and c['collect_anim'] is None:
-            # Use base_y for distance check to account for floating animation
-            dist = ((px - c['x'])**2 + (py - c['base_y'])**2) ** 0.5
+        if not c['collected']:
+            dist = ((px - c['x'])**2 + (py - c['y'])**2) ** 0.5
             if dist < collect_radius:
-                # Start collection animation instead of immediately removing
-                c['collect_anim'] = 20  # Animation frames (about 1/3 second at 60 FPS)
+                c['collected'] = True
                 state.collected_points += 1
                 state.add_xp(5)  # Give XP for collecting
-                toast(f"⭐ Collected! (+5 XP, Total: {state.collected_points} points)")
+                toast(f"Collected point! (+5 XP, Total: {state.collected_points})")
 
 
 def update_player(keys):
