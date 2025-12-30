@@ -64,14 +64,41 @@ def is_player_on_road(player_rect, road_width=50, side_road_width=40):
     return is_on_road(px, py, road_width, side_road_width, margin=2)
 
 # Generate decor trees not overlapping buildings or roads
+# Trees must be at least 30 pixels away from any road
 TREE_POS = []
 random.seed(42)
 for _ in range(26):
-    for tries in range(50):
-        tx = random.randint(12, MAP_W - 12)
-        ty = random.randint(12, MAP_H - 12)
+    for tries in range(100):
+        tx = random.randint(30, MAP_W - 30)
+        ty = random.randint(30, MAP_H - 30)
         pt_rect = Rect(tx-8, ty-8, 16, 16)
-        if not any(pt_rect.colliderect(b['rect']) for b in buildings) and not is_on_road(tx, ty):
+        # Check if tree overlaps with buildings
+        if any(pt_rect.colliderect(b['rect']) for b in buildings):
+            continue
+        # Check if tree is far enough from roads (30 pixel margin)
+        if is_on_road(tx, ty, margin=30):
+            continue
+        # Additional check: ensure tree is not near any road edge
+        main_road_y = MAP_H // 2
+        road_margin = 30
+        if abs(ty - main_road_y) < road_margin:
+            continue
+        # Check vertical roads to buildings
+        too_close_to_road = False
+        for b in buildings:
+            building_rect = b['rect']
+            gate_x = building_rect.centerx
+            if abs(tx - gate_x) < road_margin:
+                gate_y = building_rect.bottom
+                if gate_y < main_road_y:
+                    if gate_y <= ty <= main_road_y:
+                        too_close_to_road = True
+                        break
+                else:
+                    if main_road_y <= ty <= gate_y:
+                        too_close_to_road = True
+                        break
+        if not too_close_to_road:
             TREE_POS.append((tx, ty))
             break
 
@@ -135,7 +162,14 @@ buttons = []
 
 def toast(text, color=(30,30,30)):
     # simple console placeholder (can be extended to visual toasts)
-    print("[Toast]", text)
+    # Remove emojis for console output to avoid encoding issues on Windows
+    try:
+        print("[Toast]", text)
+    except UnicodeEncodeError:
+        # Fallback: remove emoji and print plain text
+        import re
+        text_clean = re.sub(r'[^\x00-\x7F]+', '', text)  # Remove non-ASCII characters
+        print("[Toast]", text_clean)
 
 
 def draw_grass(surface: pygame.Surface):
@@ -276,22 +310,22 @@ def check_city_gate_collision():
     # Left edge: px < 250, Right edge: px > 950 (SCREEN_W is 1200)
     if px < 250 or px > 950:
         if state.transition_alpha < 255:
-            # Start fade transition
+            # Continue fade transition
             state.transition_alpha = min(255, state.transition_alpha + 20)
         else:
             # Transition complete, switch to campus
             state.show_city_view = False
-            state.transition_alpha = 255  # Start fade in from black
+            state.transition_alpha = 255  # Start fade in from black (campus will fade in)
             toast("Returning to campus...")
             
-            # Set campus player position
+            # Set campus player position based on which gate was used
             if px < SCREEN_W // 2:
                 player_rect.x = 50  # Left gate
             else:
                 player_rect.x = MAP_W - 50  # Right gate
             player_rect.y = MAP_H // 2 - PLAYER_SIZE // 2
             
-            # Reset for next city visit
+            # Reset city player position for next visit
             state.city_player_x = 600
             state.city_player_y = 525
 
