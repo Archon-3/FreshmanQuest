@@ -945,7 +945,20 @@ def draw_hud(surface: pygame.Surface):
     # XP and Rank
     surface.blit(FONT_SM.render(f"XP: {state.xp}", True, TEXT), (24, y)); y += 18
     surface.blit(FONT_SM.render(f"Rank: {state.rank_for_xp()}", True, TEXT), (24, y)); y += 18
-    surface.blit(FONT_SM.render(f"Points: {state.collected_points}", True, PRIMARY), (24, y)); y += 22
+    surface.blit(FONT_SM.render(f"💰 Coins: {state.collected_points}", True, PRIMARY), (24, y)); y += 18
+    
+    # Streak display
+    if state.daily_streak > 0:
+        streak_text = f"🔥 Streak: {state.daily_streak} days"
+        streak_color = (255, 150, 0) if state.daily_streak >= 7 else (255, 200, 100)
+        surface.blit(FONT_SM.render(streak_text, True, streak_color), (24, y)); y += 18
+    
+    # Difficulty level
+    if state.difficulty_level > 1:
+        diff_text = f"⚡ Difficulty: {state.difficulty_level}"
+        surface.blit(FONT_SM.render(diff_text, True, (255, 100, 100)), (24, y)); y += 18
+    
+    y += 4
     
     # Energy bar
     surface.blit(FONT_SM.render("⚡ Energy:", True, TEXT), (24, y));
@@ -983,6 +996,26 @@ def draw_hud(surface: pygame.Surface):
     for item in sorted(list(state.inventory))[:8]:
         surface.blit(FONT_SM.render(f"• {item}", True, TEXT), (24, iy)); iy += 20
     y += inv_h + 12
+
+    # Daily Challenges panel (compact)
+    challenges_h = 80
+    pygame.draw.rect(surface, PANEL, Rect(12, y, HUD_W-24, challenges_h), border_radius=12)
+    pygame.draw.rect(surface, BORDER, Rect(12, y, HUD_W-24, challenges_h), 1, border_radius=12)
+    surface.blit(FONT_SM.render("Daily Challenges", True, PRIMARY), (24, y+6))
+    cy = y + 24
+    # Show top 2 challenges
+    challenge_list = [
+        ('collect_coins', f"Collect {state.daily_challenges['collect_coins']['target']} coins"),
+        ('visit_buildings', f"Visit {state.daily_challenges['visit_buildings']['target']} buildings"),
+    ]
+    for key, label in challenge_list[:2]:
+        challenge = state.daily_challenges.get(key, {})
+        progress = challenge.get('current', 0)
+        target = challenge.get('target', 0)
+        status = f"{progress}/{target}"
+        color = SUCCESS if progress >= target else TEXT
+        surface.blit(FONT_SM.render(f"• {label}: {status}", True, color), (24, cy)); cy += 16
+    y += challenges_h + 12
 
     # Quests panel
     quests_h = MAP_H - y - 12
@@ -1032,6 +1065,15 @@ def open_popup_for(key: str):
     if not state.can_access_building(key):
         toast(f"{key.capitalize()} is closed at this time.")
         return
+    
+    # Track building visit for daily challenge
+    if key in ['dorm', 'classroom', 'library', 'cafeteria', 'admin']:
+        state.daily_challenges['visit_buildings']['current'] += 1
+    
+    # Check achievements when visiting buildings
+    achievement_msg = state.check_achievements()
+    if achievement_msg:
+        toast(achievement_msg)
     
     helpers = {
         'addXP': state.add_xp,
@@ -1200,7 +1242,9 @@ def draw_player(surface: pygame.Surface):
 def check_collectibles():
     """Check if player collected any coins with smooth collection detection."""
     px, py = player_rect.centerx, player_rect.centery
-    collect_radius = 18  # Collection radius (slightly tighter for better feel)
+    # Apply coin magnet upgrade (increases collection radius)
+    base_radius = 18
+    collect_radius = base_radius + (state.upgrades.get('coin_magnet', 0) * 5)
     
     for c in COLLECTIBLES:
         if not c['collected']:
@@ -1210,8 +1254,22 @@ def check_collectibles():
             if dist < collect_radius:
                 c['collected'] = True
                 state.collected_points += 1
-                state.add_xp(5)  # Give XP for collecting coins
-                toast(f"💰 Coin collected! (+5 XP, Total: {state.collected_points} coins)")
+                
+                # Apply streak bonus to XP
+                base_xp = 5
+                streak_bonus = state.get_streak_bonus()
+                xp_gain = int(base_xp * (1 + streak_bonus))
+                state.add_xp(xp_gain)
+                
+                # Update daily challenge
+                state.daily_challenges['collect_coins']['current'] += 1
+                
+                # Check achievements
+                achievement_msg = state.check_achievements()
+                if achievement_msg:
+                    toast(achievement_msg)
+                
+                toast(f"💰 Coin collected! (+{xp_gain} XP, Total: {state.collected_points} coins)")
 
 
 def update_player(keys):
@@ -1392,6 +1450,27 @@ def main():
         # Process stat decay/regeneration every 60 frames (1 second at 60 FPS)
         if frame_count % 60 == 0:
             state.process_stat_decay()
+            # Apply difficulty scaling to stress
+            stress_increase = state.stress_multiplier - 1.0
+            if stress_increase > 0:
+                state.add_stress(stress_increase * 0.1)
+        
+        # Update daily challenges and streak
+        if frame_count % 60 == 0:
+            state.update_daily_challenges()
+            state.update_streak()
+            state.update_difficulty()
+            
+            # Check daily challenges
+            challenge_rewards = state.check_daily_challenges()
+            for reward_msg in challenge_rewards:
+                toast(reward_msg)
+        
+        # Trigger random events occasionally
+        if frame_count % 120 == 0:  # Every 2 seconds
+            event_msg = state.trigger_random_event()
+            if event_msg:
+                toast(event_msg)
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
