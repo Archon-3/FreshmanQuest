@@ -1263,14 +1263,15 @@ def check_gate_collision():
 def render():
     # Handle smooth transition
     if state.show_city_view:
-        # Fade in city view
+        # Fade in city view smoothly - ensure city is always visible when show_city_view is True
         if state.transition_alpha < 255:
             state.transition_alpha = min(255, state.transition_alpha + 15)  # Fade in speed
         
+        # Always draw city view when show_city_view is True
         SCREEN.fill((0, 0, 0))
         draw_city_view(SCREEN)
         
-        # Apply fade transition overlay
+        # Apply fade transition overlay (fade from black to city view)
         if state.transition_alpha < 255:
             fade_overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
             fade_overlay.fill((0, 0, 0, 255 - state.transition_alpha))
