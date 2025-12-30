@@ -264,7 +264,7 @@ def draw_gates(surface: pygame.Surface):
 def update_city_player(keys):
     """Update player movement in city view - restricted to city road."""
     road_y = SCREEN_H - 100
-    road_center_y = road_y + 50  # Center of the road
+    road_center_y = road_y + 50  # Center of the road (SCREEN_H - 50)
     
     dx = dy = 0
     if keys[pygame.K_LEFT]: dx -= 1
@@ -281,18 +281,18 @@ def update_city_player(keys):
         new_x = state.city_player_x + vx
         new_y = state.city_player_y + vy
         
-        # Allow movement to edges (including gates) - allow reaching gate areas
-        new_x = clamp(new_x, -50, SCREEN_W + 50)
+        # Allow horizontal movement across the entire screen (to reach gates)
+        new_x = clamp(new_x, 0, SCREEN_W)
         
         # Keep player on the road (center Y should be near road center)
-        road_margin = 20  # Allow some vertical movement on road
-        if abs(new_y - road_center_y) < road_margin:
+        road_margin = 25  # Allow some vertical movement on road
+        if abs(new_y - road_center_y) <= road_margin:
             state.city_player_x = new_x
             state.city_player_y = new_y
         else:
-            # Only allow horizontal movement if trying to go off road
+            # Allow horizontal movement, but constrain vertical to road
             state.city_player_x = new_x
-            # Snap back to road center
+            # Snap back to road center if trying to go off road
             if new_y < road_center_y - road_margin:
                 state.city_player_y = road_center_y - road_margin
             elif new_y > road_center_y + road_margin:
@@ -305,10 +305,11 @@ def check_city_gate_collision():
         return
     
     px = state.city_player_x
+    road_center_y = SCREEN_H - 50
     
-    # Smooth transition: If player is near edges, start transition back to campus
-    # Left edge: px < 250, Right edge: px > 950 (SCREEN_W is 1200)
-    if px < 250 or px > 950:
+    # Check if player is near left gate (to return to campus)
+    left_gate_x = 60  # Gate position on left
+    if px <= left_gate_x + 30 and abs(state.city_player_y - road_center_y) < 40:
         if state.transition_alpha < 255:
             # Continue fade transition
             state.transition_alpha = min(255, state.transition_alpha + 20)
@@ -318,16 +319,34 @@ def check_city_gate_collision():
             state.transition_alpha = 255  # Start fade in from black (campus will fade in)
             toast("Returning to campus...")
             
-            # Set campus player position based on which gate was used
-            if px < SCREEN_W // 2:
-                player_rect.x = 50  # Left gate
-            else:
-                player_rect.x = MAP_W - 50  # Right gate
+            # Set campus player position at left gate
+            player_rect.x = 50
             player_rect.y = MAP_H // 2 - PLAYER_SIZE // 2
             
             # Reset city player position for next visit
             state.city_player_x = 600
-            state.city_player_y = 525
+            state.city_player_y = road_center_y
+            return
+    
+    # Check if player is near right gate (to return to campus)
+    right_gate_x = SCREEN_W - 60  # Gate position on right
+    if px >= right_gate_x - 30 and abs(state.city_player_y - road_center_y) < 40:
+        if state.transition_alpha < 255:
+            # Continue fade transition
+            state.transition_alpha = min(255, state.transition_alpha + 20)
+        else:
+            # Transition complete, switch to campus
+            state.show_city_view = False
+            state.transition_alpha = 255  # Start fade in from black (campus will fade in)
+            toast("Returning to campus...")
+            
+            # Set campus player position at right gate
+            player_rect.x = MAP_W - 50
+            player_rect.y = MAP_H // 2 - PLAYER_SIZE // 2
+            
+            # Reset city player position for next visit
+            state.city_player_x = 600
+            state.city_player_y = road_center_y
 
 
 def draw_city_gates(surface: pygame.Surface):
@@ -1252,12 +1271,12 @@ def check_gate_collision():
             state.transition_alpha = 0  # Start fade transition
             toast("Entering the city...")
             # Set city player position based on which gate was used
-            road_center_y = SCREEN_H - 50  # City road center Y
+            road_center_y = SCREEN_H - 50  # City road center Y (road_y + 50)
             if left_gate_rect.collidepoint(px, py):  # Left gate
-                state.city_player_x = 150  # Start near left gate
+                state.city_player_x = 150  # Start near left gate area
             else:  # Right gate
-                state.city_player_x = SCREEN_W - 150  # Start near right gate
-            state.city_player_y = road_center_y  # On the road
+                state.city_player_x = SCREEN_W - 150  # Start near right gate area
+            state.city_player_y = road_center_y  # On the road center
 
 
 def render():
