@@ -70,6 +70,7 @@ class GameState:
         self.dorm_player_state = 'idle'  # idle, sleeping, showering, studying, exiting
         self.dorm_action_timer = 0  # Timer for actions
         self.shower_water_particles = []  # Water particles for shower animation
+        self.locker_open = False  # Track if locker is open
         self.collected_points = 0  # Track collected points/coins
         
         # Achievement system

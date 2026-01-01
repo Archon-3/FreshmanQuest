@@ -534,25 +534,56 @@ def draw_dorm_player(surface: pygame.Surface):
             surface.blit(text, (zzz_x - 3, zzz_y + zzz_offset - 8))
         
     elif player_state == 'showering':
-        # Draw player in shower (simplified, behind glass)
+        # Draw player in shower - VISIBLE with water particles
         shower_x, shower_y = SCREEN_W - 140, 180
         shower_width = 110
         shower_height = 220
         shower_center_x = shower_x + shower_width // 2
         shower_center_y = shower_y + shower_height // 2
         
-        # Draw water particles around player
-        draw_shower_water(surface, shower_center_x, shower_center_y)
-        
-        # Draw player silhouette (behind frosted glass)
+        # Draw water particles around player (will be drawn in draw_dorm_interior)
+        # Player is visible in shower
         player_x = shower_center_x
         player_y = shower_center_y
-        # Simplified player shape (blurred by glass)
-        pygame.draw.ellipse(surface, (180, 180, 200), Rect(player_x - 8, player_y - 10, 16, 20))
+        
+        # Draw visible player character (not just silhouette)
+        # Head
+        head_radius = 7
+        head_y = player_y - 12
+        pygame.draw.circle(surface, (255, 220, 177), (player_x, head_y), head_radius)
+        pygame.draw.circle(surface, (240, 200, 157), (player_x - 1, head_y - 1), head_radius - 1)
+        
+        # Hair (wet/dark)
+        hair_rect = Rect(player_x - head_radius + 1, head_y - head_radius - 2, 
+                         head_radius * 2 - 2, head_radius + 2)
+        pygame.draw.ellipse(surface, (40, 25, 15), hair_rect)  # Darker when wet
+        
+        # Body (visible through water)
+        body_top = head_y + head_radius + 1
+        body_rect = Rect(player_x - 6, body_top, 12, 10)
+        pygame.draw.rect(surface, (255, 80, 60), body_rect, border_radius=2)  # Shirt visible
+        
+        # Arms
+        pygame.draw.rect(surface, (255, 220, 177), Rect(player_x - 9, body_top + 1, 3, 7))
+        pygame.draw.rect(surface, (255, 220, 177), Rect(player_x + 6, body_top + 1, 3, 7))
+        
+        # Legs
+        leg_top = body_top + 10
+        pygame.draw.rect(surface, (255, 220, 0), Rect(player_x - 4, leg_top, 3, 8))
+        pygame.draw.rect(surface, (255, 220, 0), Rect(player_x + 1, leg_top, 3, 8))
+        
+        # Face (visible)
+        eye_y = head_y - 1
+        pygame.draw.circle(surface, (255, 255, 255), (player_x - 2, eye_y), 1)
+        pygame.draw.circle(surface, (0, 0, 0), (player_x - 2, eye_y), 1)
+        pygame.draw.circle(surface, (255, 255, 255), (player_x + 2, eye_y), 1)
+        pygame.draw.circle(surface, (0, 0, 0), (player_x + 2, eye_y), 1)
         
     elif player_state == 'studying':
-        # Draw player sitting at desk
-        desk_x, desk_y = SCREEN_W - 350, SCREEN_H - 200
+        # Draw player sitting at desk - FIXED coordinates
+        desk_x = SCREEN_W - 380
+        desk_y = SCREEN_H - 180
+        desk_width = 200
         chair_x = desk_x + desk_width // 2
         chair_y = desk_y + 30
         
@@ -710,16 +741,16 @@ def draw_dorm_player(surface: pygame.Surface):
 
 def draw_shower_water(surface: pygame.Surface, center_x: int, center_y: int):
     """Draw animated water particles for shower effect."""
-    # Update water particles
-    if len(state.shower_water_particles) < 40:
-        # Add new particles from shower head
-        for _ in range(4):
+    # Update water particles - continuously generate when showering
+    if state.dorm_player_state == 'showering':
+        # Always add new particles while showering
+        for _ in range(5):  # More particles for better effect
             state.shower_water_particles.append({
-                'x': center_x + random.randint(-12, 12),
-                'y': center_y - 50,
-                'speed': random.uniform(2.5, 5),
+                'x': center_x + random.randint(-15, 15),
+                'y': center_y - 60,  # Start from shower head
+                'speed': random.uniform(3, 6),
                 'size': random.randint(2, 5),
-                'wobble': random.uniform(-0.5, 0.5)
+                'wobble': random.uniform(-0.8, 0.8)
             })
     
     # Update and draw particles
@@ -901,15 +932,40 @@ def draw_dorm_interior(surface: pygame.Surface):
     locker_width = 120
     locker_height = 250
     
-    # Locker body (gray metal)
+    # Locker body (gray metal) - lighter when open
     locker_rect = Rect(locker_x, locker_y, locker_width, locker_height)
-    pygame.draw.rect(surface, (150, 150, 160), locker_rect)
+    locker_color = (180, 180, 190) if state.locker_open else (150, 150, 160)
+    pygame.draw.rect(surface, locker_color, locker_rect)
     pygame.draw.rect(surface, (120, 120, 130), locker_rect, 3)
     
-    # Locker door lines (vertical)
-    for i in range(1, 3):
-        line_x = locker_x + (locker_width // 3) * i
-        pygame.draw.line(surface, (120, 120, 130), (line_x, locker_y), (line_x, locker_y + locker_height), 2)
+    # Locker door lines (vertical) - show open if locker is open
+    if state.locker_open:
+        # Draw open locker doors (slightly offset to show they're open)
+        # Left door
+        left_door = Rect(locker_x, locker_y, locker_width // 3, locker_height)
+        pygame.draw.rect(surface, (160, 160, 170), left_door)
+        pygame.draw.rect(surface, (140, 140, 150), left_door, 2)
+        # Right doors
+        for i in range(1, 3):
+            door_x = locker_x + (locker_width // 3) * i
+            door = Rect(door_x, locker_y, locker_width // 3, locker_height)
+            pygame.draw.rect(surface, (160, 160, 170), door)
+            pygame.draw.rect(surface, (140, 140, 150), door, 2)
+        # Draw locker interior (dark)
+        interior_rect = Rect(locker_x + 5, locker_y + 5, locker_width - 10, locker_height - 10)
+        pygame.draw.rect(surface, (80, 80, 90), interior_rect)
+        # Draw key if not collected
+        if not state.flags['dormKey']:
+            key_x = locker_x + locker_width // 2
+            key_y = locker_y + locker_height // 2
+            # Key shape
+            pygame.draw.circle(surface, (200, 180, 50), (key_x, key_y), 4)
+            pygame.draw.rect(surface, (200, 180, 50), Rect(key_x + 3, key_y - 1, 6, 2))
+    else:
+        # Closed locker - show door lines
+        for i in range(1, 3):
+            line_x = locker_x + (locker_width // 3) * i
+            pygame.draw.line(surface, (120, 120, 130), (line_x, locker_y), (line_x, locker_y + locker_height), 2)
     
     # Locker handles
     handle_y = locker_y + locker_height // 2
@@ -2040,6 +2096,161 @@ def render():
         btn.draw(SCREEN, FONT)
 
 
+def check_dorm_proximity():
+    """Check if player is near any interactable item in dorm."""
+    px, py = state.dorm_player_x, state.dorm_player_y
+    proximity_radius = 50  # Distance to trigger interaction
+    
+    # Check bed proximity
+    bed_x = 80 + 70  # Bed center
+    bed_y = SCREEN_H - 220 + 65  # Bed center
+    bed_dist = ((px - bed_x)**2 + (py - bed_y)**2) ** 0.5
+    if bed_dist < proximity_radius:
+        return 'bed'
+    
+    # Check shower proximity
+    shower_x = SCREEN_W - 140 + 55  # Shower center
+    shower_y = 180 + 110  # Shower center
+    shower_dist = ((px - shower_x)**2 + (py - shower_y)**2) ** 0.5
+    if shower_dist < proximity_radius:
+        return 'shower'
+    
+    # Check locker proximity
+    locker_x = 50 + 60  # Locker center
+    locker_y = 100 + 125  # Locker center
+    locker_dist = ((px - locker_x)**2 + (py - locker_y)**2) ** 0.5
+    if locker_dist < proximity_radius:
+        return 'locker'
+    
+    # Check desk proximity
+    desk_x = SCREEN_W - 380 + 100  # Desk center
+    desk_y = SCREEN_H - 180 + 9  # Desk top center
+    desk_dist = ((px - desk_x)**2 + (py - desk_y)**2) ** 0.5
+    if desk_dist < proximity_radius:
+        return 'desk'
+    
+    # Check exit door proximity
+    exit_x = SCREEN_W // 2
+    exit_y = SCREEN_H - 120 + 60  # Exit door center
+    exit_dist = ((px - exit_x)**2 + (py - exit_y)**2) ** 0.5
+    if exit_dist < proximity_radius:
+        return 'exit'
+    
+    return None
+
+
+def handle_dorm_interior_enter():
+    """Handle Enter key press in dorm interior - interact with nearest item."""
+    item = check_dorm_proximity()
+    
+    if item == 'bed':
+        # Sleep when Enter pressed near bed
+        if state.energy < 100 or state.stress > 0:
+            state.dorm_player_state = 'sleeping'
+            state.dorm_player_x = 80 + 70  # Bed center
+            state.dorm_player_y = SCREEN_H - 220 + 65  # Bed center
+            state.dorm_action_timer = 180  # 3 seconds
+            # Award points for sleeping
+            state.add_xp(5)
+            state.collected_points += 2
+            toast("💤 Going to sleep... (+5 XP, +2 coins)")
+        else:
+            toast("You're already well-rested!")
+    
+    elif item == 'shower':
+        # Start showering when Enter pressed near shower
+        if state.energy < 5:
+            toast("Too tired to shower! Need at least 5 energy.")
+            return
+        
+        state.dorm_player_state = 'showering'
+        state.dorm_player_x = SCREEN_W - 140 + 55  # Shower center
+        state.dorm_player_y = 180 + 110  # Shower center
+        state.dorm_action_timer = 120  # 2 seconds
+        state.shower_water_particles = []  # Reset water particles
+        state.add_stress(-10)
+        state.add_energy(-5)
+        # Award points for showering
+        state.add_xp(3)
+        state.collected_points += 1
+        toast("🚿 Showering... Stress -10, Energy -5 (+3 XP, +1 coin)")
+    
+    elif item == 'locker':
+        # Open locker when Enter pressed near it
+        if not state.locker_open:
+            state.locker_open = True
+            if not state.flags['dormKey']:
+                state.flags['dormKey'] = True
+                state.add_item('Dorm Key')
+                # Award points for getting key
+                state.add_xp(10)
+                state.collected_points += 3
+                toast("🔑 Locker opened! Dorm Key collected! (+10 XP, +3 coins)")
+            else:
+                # Still award small points for opening
+                state.add_xp(1)
+                state.collected_points += 1
+                toast("🔑 Locker opened (empty) (+1 XP, +1 coin)")
+        else:
+            state.locker_open = False
+            toast("🔒 Locker closed")
+    
+    elif item == 'desk':
+        # Study when Enter pressed near desk - player sits
+        if state.energy < 20:
+            toast("Too tired to study! Need at least 20 energy.")
+            return
+        
+        state.dorm_player_state = 'studying'
+        state.dorm_player_x = SCREEN_W - 380 + 100  # Desk center
+        state.dorm_player_y = SCREEN_H - 180 + 30  # Chair position
+        state.dorm_action_timer = 180  # 3 seconds
+        
+        if not state.flags['dormStudyDone']:
+            state.flags['dormStudyDone'] = True
+            knowledge_gain = 8
+            stress_gain = 3
+            energy_cost = 15
+            
+            if state.stress > 70:
+                knowledge_gain = int(knowledge_gain * 0.7)
+            
+            state.add_xp(10)
+            state.add_knowledge(knowledge_gain)
+            state.add_stress(stress_gain)
+            state.add_energy(-energy_cost)
+            state.add_discipline(2)
+            # Award coins for studying
+            state.collected_points += 5
+            toast(f"📚 Studying... +10 XP, +{knowledge_gain} Knowledge, +5 coins")
+        else:
+            if state.energy < 15:
+                toast("Too tired to study! Need at least 15 energy.")
+                state.dorm_player_state = 'idle'
+                return
+            knowledge_gain = 5
+            stress_gain = 2
+            energy_cost = 15
+            if state.stress > 70:
+                knowledge_gain = int(knowledge_gain * 0.7)
+            state.add_xp(5)
+            state.add_knowledge(knowledge_gain)
+            state.add_stress(stress_gain)
+            state.add_energy(-energy_cost)
+            state.add_discipline(1)
+            # Award coins for studying
+            state.collected_points += 3
+            toast(f"📚 Studying... +5 XP, +{knowledge_gain} Knowledge, +3 coins")
+    
+    elif item == 'exit':
+        # Exit when Enter pressed near exit door
+        state.dorm_player_state = 'exiting'
+        state.dorm_player_x = SCREEN_W // 2
+        state.dorm_player_y = SCREEN_H - 100
+        state.dorm_action_timer = 60  # 1 second at 60 FPS
+        toast("Exiting dormitory...")
+
+
 def handle_dorm_interior_click(mx, my):
     """Handle clicks in dorm interior view."""
     global dorm_bed_rect, dorm_desk_rect, dorm_locker_rect, dorm_shower_rect, dorm_exit_door_rect
@@ -2075,10 +2286,13 @@ def handle_dorm_interior_click(mx, my):
         if state.energy < 100 or state.stress > 0:
             # Set player to sleeping state
             state.dorm_player_state = 'sleeping'
-            state.dorm_player_x = 100 + 80  # Bed center
-            state.dorm_player_y = SCREEN_H - 220 + 60  # Bed center
+            state.dorm_player_x = 80 + 70  # Bed center (updated coordinates)
+            state.dorm_player_y = SCREEN_H - 220 + 65  # Bed center
             state.dorm_action_timer = 180  # 3 seconds
-            toast("💤 Going to sleep...")
+            # Award points for sleeping
+            state.add_xp(5)
+            state.collected_points += 2
+            toast("💤 Going to sleep... (+5 XP, +2 coins)")
         else:
             toast("You're already well-rested!")
         return True
@@ -2109,7 +2323,9 @@ def handle_dorm_interior_click(mx, my):
             state.add_stress(stress_gain)
             state.add_energy(-energy_cost)
             state.add_discipline(2)
-            toast(f"📚 Studying... +10 XP, +{knowledge_gain} Knowledge")
+            # Award coins for studying
+            state.collected_points += 5
+            toast(f"📚 Studying... +10 XP, +{knowledge_gain} Knowledge, +5 coins")
         else:
             if state.energy < 15:
                 toast("Too tired to study! Need at least 15 energy.")
@@ -2125,17 +2341,30 @@ def handle_dorm_interior_click(mx, my):
             state.add_stress(stress_gain)
             state.add_energy(-energy_cost)
             state.add_discipline(1)
-            toast(f"📚 Studying... +5 XP, +{knowledge_gain} Knowledge")
+            # Award coins for studying
+            state.collected_points += 3
+            toast(f"📚 Studying... +5 XP, +{knowledge_gain} Knowledge, +3 coins")
         return True
     
-    # Check locker (get dorm key)
+    # Check locker (get dorm key) - click to open/close
     if dorm_locker_rect and dorm_locker_rect.collidepoint(mx, my):
-        if not state.flags['dormKey']:
-            state.flags['dormKey'] = True
-            state.add_item('Dorm Key')
-            toast("🔑 Dorm Key collected from locker!")
+        if not state.locker_open:
+            state.locker_open = True
+            if not state.flags['dormKey']:
+                state.flags['dormKey'] = True
+                state.add_item('Dorm Key')
+                # Award points for getting key
+                state.add_xp(10)
+                state.collected_points += 3
+                toast("🔑 Locker opened! Dorm Key collected! (+10 XP, +3 coins)")
+            else:
+                # Still award small points for opening
+                state.add_xp(1)
+                state.collected_points += 1
+                toast("🔑 Locker opened (empty) (+1 XP, +1 coin)")
         else:
-            toast("Locker is empty")
+            state.locker_open = False
+            toast("🔒 Locker closed")
         return True
     
     # Check shower (reduce stress) - player goes to shower
@@ -2152,7 +2381,10 @@ def handle_dorm_interior_click(mx, my):
         state.shower_water_particles = []  # Reset water particles
         state.add_stress(-10)
         state.add_energy(-5)
-        toast("🚿 Showering... Stress -10, Energy -5")
+        # Award points for showering
+        state.add_xp(3)
+        state.collected_points += 1
+        toast("🚿 Showering... Stress -10, Energy -5 (+3 XP, +1 coin)")
         return True
     
     return False
@@ -2239,6 +2471,10 @@ def main():
                 if event.key == pygame.K_e:
                     if current_overlap and not state.popup_open:
                         open_popup_for(current_overlap['key'])
+                # Handle Enter key in dorm interior
+                if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
+                    if state.show_dorm_interior and state.dorm_player_state == 'idle':
+                        handle_dorm_interior_enter()
             elif event.type in (pygame.MOUSEBUTTONUP,):
                 handle_mouse(event)
 
