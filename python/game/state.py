@@ -67,6 +67,9 @@ class GameState:
         self.city_player_y = 525  # On the city road (SCREEN_H - 75 = 525)
         self.dorm_player_x = 600  # Start player in center of dorm (SCREEN_W/2 = 600)
         self.dorm_player_y = 500  # Start player near floor/entrance area
+        self.dorm_player_state = 'idle'  # idle, sleeping, showering, studying, exiting
+        self.dorm_action_timer = 0  # Timer for actions
+        self.shower_water_particles = []  # Water particles for shower animation
         self.collected_points = 0  # Track collected points/coins
         
         # Achievement system
