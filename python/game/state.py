@@ -60,10 +60,13 @@ class GameState:
         self.suppress_until_exit = False
         self.victory_awarded = False
         self.show_city_view = False
+        self.show_dorm_interior = False
         self.transition_alpha = 0
         self.city_car_positions = [100, 300, 500, 700, 900]  # Initial car positions
         self.city_player_x = 600  # Start player in center of city road (SCREEN_W/2 = 600)
         self.city_player_y = 525  # On the city road (SCREEN_H - 75 = 525)
+        self.dorm_player_x = 600  # Start player in center of dorm (SCREEN_W/2 = 600)
+        self.dorm_player_y = 500  # Start player near floor/entrance area
         self.collected_points = 0  # Track collected points/coins
         
         # Achievement system

@@ -494,6 +494,338 @@ def draw_city_player(surface: pygame.Surface):
     pygame.draw.arc(surface, (180, 100, 100), Rect(px - 3, head_y + 2, 6, 3), 0, 3.14, 1)
 
 
+def draw_dorm_player(surface: pygame.Surface):
+    """Draw player character in dorm interior view."""
+    px, py = state.dorm_player_x, state.dorm_player_y
+    size = PLAYER_SIZE
+    
+    # Enhanced shadow with blur effect
+    shadow_rect = Rect(px - size//2 + 2, py + size//2 - 1, size - 4, 5)
+    shadow_surf = pygame.Surface((size, 5), pygame.SRCALPHA)
+    # Create gradient shadow
+    for i in range(5):
+        alpha = max(0, 50 - i * 10)
+        shadow_surf.fill((0, 0, 0, alpha), Rect(0, i, size, 1))
+    surface.blit(shadow_surf, (shadow_rect.x, shadow_rect.y))
+    
+    # Head with better proportions
+    head_radius = 8
+    head_y = py - size // 2 + head_radius + 3
+    
+    # Head base (skin tone)
+    pygame.draw.circle(surface, (255, 220, 177), (px, head_y), head_radius)
+    # Head shading for depth
+    pygame.draw.circle(surface, (240, 200, 157), (px - 2, head_y - 1), head_radius - 1)
+    pygame.draw.circle(surface, (200, 180, 150), (px, head_y), head_radius, 1)
+    
+    # Hair with texture
+    hair_color = (50, 30, 15)  # Dark brown hair
+    hair_light = (70, 45, 25)
+    hair_rect = Rect(px - head_radius + 1, head_y - head_radius - 3, 
+                     head_radius * 2 - 2, head_radius + 3)
+    pygame.draw.ellipse(surface, hair_color, hair_rect)
+    # Hair highlights
+    pygame.draw.ellipse(surface, hair_light, Rect(px - head_radius + 2, head_y - head_radius - 2, 
+                                                  head_radius * 2 - 4, head_radius))
+    
+    # Neck
+    neck_rect = Rect(px - 2, head_y + head_radius - 1, 4, 3)
+    pygame.draw.rect(surface, (255, 220, 177), neck_rect)
+    
+    # Body (torso) - shirt with better proportions
+    body_top = head_y + head_radius + 2
+    body_height = 10
+    body_width = 10
+    body_rect = Rect(px - body_width//2, body_top, body_width, body_height)
+    
+    # Shirt with shading - bright red/orange for visibility
+    shirt_color = (255, 80, 60)  # Bright red-orange shirt
+    shirt_dark = (220, 50, 40)
+    shirt_light = (255, 120, 100)
+    pygame.draw.rect(surface, shirt_color, body_rect, border_radius=2)
+    # Shirt shading
+    pygame.draw.rect(surface, shirt_dark, Rect(body_rect.x, body_rect.y, body_rect.w, body_rect.h//2), border_radius=2)
+    pygame.draw.line(surface, shirt_light, (body_rect.x + 1, body_rect.y + body_rect.h//2), 
+                    (body_rect.x + body_rect.w - 1, body_rect.y + body_rect.h//2), 1)
+    pygame.draw.rect(surface, (180, 30, 20), body_rect, 1, border_radius=2)
+    
+    # Arms with better positioning and shading
+    arm_width = 3
+    arm_length = 8
+    arm_y = body_top + 1
+    # Left arm
+    left_arm_rect = Rect(px - body_width//2 - arm_width, arm_y, arm_width, arm_length)
+    pygame.draw.rect(surface, (255, 220, 177), left_arm_rect, border_radius=1)
+    pygame.draw.rect(surface, (240, 200, 157), Rect(left_arm_rect.x, left_arm_rect.y, arm_width, arm_length//2))
+    # Right arm
+    right_arm_rect = Rect(px + body_width//2, arm_y, arm_width, arm_length)
+    pygame.draw.rect(surface, (255, 220, 177), right_arm_rect, border_radius=1)
+    pygame.draw.rect(surface, (240, 200, 157), Rect(right_arm_rect.x, right_arm_rect.y, arm_width, arm_length//2))
+    
+    # Hands
+    hand_size = 2
+    pygame.draw.circle(surface, (255, 220, 177), (px - body_width//2 - arm_width//2, arm_y + arm_length), hand_size)
+    pygame.draw.circle(surface, (255, 220, 177), (px + body_width//2 + arm_width//2, arm_y + arm_length), hand_size)
+    
+    # Legs (pants) with better proportions
+    leg_top = body_top + body_height
+    leg_width = 4
+    leg_height = 9
+    pants_color = (255, 220, 0)  # Yellow trousers
+    pants_dark = (220, 190, 0)
+    # Left leg
+    left_leg_rect = Rect(px - leg_width - 1, leg_top, leg_width, leg_height)
+    pygame.draw.rect(surface, pants_color, left_leg_rect, border_radius=1)
+    pygame.draw.rect(surface, pants_dark, Rect(left_leg_rect.x, left_leg_rect.y, leg_width, leg_height//2))
+    # Right leg
+    right_leg_rect = Rect(px + 1, leg_top, leg_width, leg_height)
+    pygame.draw.rect(surface, pants_color, right_leg_rect, border_radius=1)
+    pygame.draw.rect(surface, pants_dark, Rect(right_leg_rect.x, right_leg_rect.y, leg_width, leg_height//2))
+    
+    # Feet (shoes) - more detailed
+    foot_y = leg_top + leg_height
+    foot_width = 5
+    foot_height = 3
+    shoe_color = (255, 255, 255)  # White shoes
+    shoe_sole = (200, 200, 200)
+    foot_rect_l = Rect(px - foot_width - 1, foot_y, foot_width, foot_height)
+    pygame.draw.rect(surface, shoe_color, foot_rect_l, border_radius=1)
+    pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_l.x, foot_rect_l.y + foot_height - 1, foot_width, 1))
+    foot_rect_r = Rect(px + 1, foot_y, foot_width, foot_height)
+    pygame.draw.rect(surface, shoe_color, foot_rect_r, border_radius=1)
+    pygame.draw.rect(surface, shoe_sole, Rect(foot_rect_r.x, foot_rect_r.y + foot_height - 1, foot_width, 1))
+    
+    # Face details
+    eye_y = head_y - 2
+    eye_size = 2
+    pygame.draw.circle(surface, (255, 255, 255), (px - 3, eye_y), eye_size)
+    pygame.draw.circle(surface, (0, 0, 0), (px - 3, eye_y), 1)
+    pygame.draw.circle(surface, (255, 255, 255), (px + 3, eye_y), eye_size)
+    pygame.draw.circle(surface, (0, 0, 0), (px + 3, eye_y), 1)
+    pygame.draw.circle(surface, (240, 200, 157), (px, head_y + 1), 1)
+    pygame.draw.arc(surface, (180, 100, 100), Rect(px - 3, head_y + 2, 6, 3), 0, 3.14, 1)
+
+
+def draw_dorm_interior(surface: pygame.Surface):
+    """Draw dormitory interior with bed, locker, shower, desk, and other dorm items."""
+    global dorm_bed_rect, dorm_desk_rect, dorm_locker_rect, dorm_shower_rect, dorm_exit_door_rect
+    
+    # Background - dorm room walls (light beige/cream)
+    wall_color = (250, 245, 235)
+    surface.fill(wall_color)
+    
+    # Floor (wooden/tile texture)
+    floor_color = (180, 160, 140)
+    floor_rect = Rect(0, SCREEN_H - 150, SCREEN_W, 150)
+    pygame.draw.rect(surface, floor_color, floor_rect)
+    
+    # Floor pattern (wooden planks)
+    for i in range(0, SCREEN_W, 80):
+        pygame.draw.line(surface, (160, 140, 120), (i, SCREEN_H - 150), (i, SCREEN_H), 1)
+    
+    # Window on the right wall
+    window_rect = Rect(SCREEN_W - 200, 80, 150, 180)
+    pygame.draw.rect(surface, (200, 220, 255), window_rect)
+    pygame.draw.rect(surface, (100, 120, 150), window_rect, 5)
+    # Window cross frame
+    pygame.draw.line(surface, (100, 120, 150), (window_rect.centerx, window_rect.top), (window_rect.centerx, window_rect.bottom), 3)
+    pygame.draw.line(surface, (100, 120, 150), (window_rect.left, window_rect.centery), (window_rect.right, window_rect.centery), 3)
+    
+    # Bed on the left side
+    bed_x = 100
+    bed_y = SCREEN_H - 280
+    bed_width = 200
+    bed_height = 180
+    
+    # Bed frame (dark wood)
+    bed_frame_rect = Rect(bed_x, bed_y, bed_width, bed_height)
+    pygame.draw.rect(surface, (80, 50, 30), bed_frame_rect)
+    pygame.draw.rect(surface, (60, 40, 20), bed_frame_rect, 3)
+    
+    # Mattress (light blue/white)
+    mattress_rect = Rect(bed_x + 10, bed_y + 10, bed_width - 20, bed_height - 40)
+    pygame.draw.rect(surface, (220, 230, 250), mattress_rect)
+    pygame.draw.rect(surface, (200, 210, 230), mattress_rect, 2)
+    
+    # Pillows
+    pillow1_rect = Rect(bed_x + 20, bed_y + 15, 60, 40)
+    pillow2_rect = Rect(bed_x + 120, bed_y + 15, 60, 40)
+    pygame.draw.ellipse(surface, (255, 250, 240), pillow1_rect)
+    pygame.draw.ellipse(surface, (255, 250, 240), pillow2_rect)
+    pygame.draw.ellipse(surface, (240, 235, 225), pillow1_rect, 2)
+    pygame.draw.ellipse(surface, (240, 235, 225), pillow2_rect, 2)
+    
+    # Bed legs
+    leg_size = 8
+    for leg_x in [bed_x + 5, bed_x + bed_width - 13]:
+        for leg_y in [bed_y + bed_height - 15, bed_y + bed_height - 5]:
+            pygame.draw.rect(surface, (60, 40, 20), Rect(leg_x, leg_y, leg_size, leg_size))
+    
+    # Bed interaction area (stored for click detection)
+    dorm_bed_rect = bed_frame_rect
+    
+    # Desk on the right side (near window)
+    desk_x = SCREEN_W - 350
+    desk_y = SCREEN_H - 200
+    desk_width = 180
+    desk_height = 80
+    
+    # Desk top (wooden)
+    desk_top_rect = Rect(desk_x, desk_y, desk_width, 20)
+    pygame.draw.rect(surface, (100, 70, 50), desk_top_rect)
+    pygame.draw.rect(surface, (80, 55, 40), desk_top_rect, 2)
+    
+    # Desk legs
+    leg_width = 15
+    for leg_x in [desk_x + 10, desk_x + desk_width - 25]:
+        leg_rect = Rect(leg_x, desk_y + 20, leg_width, desk_height - 20)
+        pygame.draw.rect(surface, (80, 55, 40), leg_rect)
+        pygame.draw.rect(surface, (60, 45, 30), leg_rect, 2)
+    
+    # Desk items (laptop/book)
+    laptop_rect = Rect(desk_x + 30, desk_y - 25, 60, 40)
+    pygame.draw.rect(surface, (50, 50, 50), laptop_rect)
+    pygame.draw.rect(surface, (30, 30, 30), laptop_rect, 2)
+    pygame.draw.rect(surface, (100, 150, 200), Rect(desk_x + 35, desk_y - 20, 50, 30))
+    
+    # Desk interaction area
+    dorm_desk_rect = desk_top_rect
+    
+    # Locker/closet on the back wall (left side)
+    locker_x = 50
+    locker_y = 100
+    locker_width = 120
+    locker_height = 250
+    
+    # Locker body (gray metal)
+    locker_rect = Rect(locker_x, locker_y, locker_width, locker_height)
+    pygame.draw.rect(surface, (150, 150, 160), locker_rect)
+    pygame.draw.rect(surface, (120, 120, 130), locker_rect, 3)
+    
+    # Locker door lines (vertical)
+    for i in range(1, 3):
+        line_x = locker_x + (locker_width // 3) * i
+        pygame.draw.line(surface, (120, 120, 130), (line_x, locker_y), (line_x, locker_y + locker_height), 2)
+    
+    # Locker handles
+    handle_y = locker_y + locker_height // 2
+    for i in range(3):
+        handle_x = locker_x + (locker_width // 3) * i + (locker_width // 6)
+        pygame.draw.circle(surface, (100, 100, 110), (handle_x, handle_y), 5)
+        pygame.draw.circle(surface, (80, 80, 90), (handle_x, handle_y), 5, 2)
+    
+    # Locker interaction area
+    dorm_locker_rect = locker_rect
+    
+    # Shower area (bathroom door) on the right wall
+    shower_x = SCREEN_W - 150
+    shower_y = 200
+    shower_width = 100
+    shower_height = 200
+    
+    # Shower door frame
+    shower_frame_rect = Rect(shower_x, shower_y, shower_width, shower_height)
+    pygame.draw.rect(surface, (140, 140, 150), shower_frame_rect)
+    pygame.draw.rect(surface, (120, 120, 130), shower_frame_rect, 4)
+    
+    # Shower door (frosted glass effect)
+    door_color = (200, 220, 240)
+    pygame.draw.rect(surface, door_color, Rect(shower_x + 5, shower_y + 5, shower_width - 10, shower_height - 10))
+    
+    # Shower door handle
+    handle_x = shower_x + shower_width - 20
+    handle_y = shower_y + shower_height // 2
+    pygame.draw.circle(surface, (100, 100, 110), (handle_x, handle_y), 6)
+    pygame.draw.circle(surface, (80, 80, 90), (handle_x, handle_y), 6, 2)
+    
+    # Shower icon/indicator
+    pygame.draw.circle(surface, (150, 200, 255), (shower_x + 30, shower_y + 50), 15)
+    pygame.draw.circle(surface, (100, 150, 200), (shower_x + 30, shower_y + 50), 15, 2)
+    # Water drops
+    for drop_y in [shower_y + 70, shower_y + 85, shower_y + 100]:
+        pygame.draw.ellipse(surface, (150, 200, 255), Rect(shower_x + 25, drop_y, 10, 15))
+    
+    # Shower interaction area
+    dorm_shower_rect = shower_frame_rect
+    
+    # Door to exit (back to campus) at the bottom center
+    exit_door_x = SCREEN_W // 2 - 60
+    exit_door_y = SCREEN_H - 120
+    exit_door_width = 120
+    exit_door_height = 120
+    
+    # Exit door frame
+    exit_door_rect = Rect(exit_door_x, exit_door_y, exit_door_width, exit_door_height)
+    pygame.draw.rect(surface, (100, 80, 60), exit_door_rect)
+    pygame.draw.rect(surface, (80, 60, 40), exit_door_rect, 4)
+    
+    # Door panel
+    pygame.draw.rect(surface, (120, 100, 80), Rect(exit_door_x + 5, exit_door_y + 5, exit_door_width - 10, exit_door_height - 10))
+    
+    # Door handle
+    handle_x = exit_door_x + exit_door_width - 25
+    handle_y = exit_door_y + exit_door_height // 2
+    pygame.draw.circle(surface, (60, 60, 70), (handle_x, handle_y), 8)
+    pygame.draw.circle(surface, (40, 40, 50), (handle_x, handle_y), 8, 2)
+    
+    # Exit label
+    exit_text = FONT.render("EXIT", True, (200, 200, 200))
+    text_x = exit_door_x + (exit_door_width - exit_text.get_width()) // 2
+    text_y = exit_door_y + 15
+    pygame.draw.rect(surface, (50, 50, 50), Rect(text_x - 5, text_y - 2, exit_text.get_width() + 10, exit_text.get_height() + 4))
+    surface.blit(exit_text, (text_x, text_y))
+    
+    # Exit door interaction area
+    dorm_exit_door_rect = exit_door_rect
+    
+    # Labels for interactable items (hover hints)
+    labels = [
+        ("BED (Sleep)", bed_x + bed_width // 2, bed_y - 25),
+        ("DESK (Study)", desk_x + desk_width // 2, desk_y - 50),
+        ("LOCKER", locker_x + locker_width // 2, locker_y - 25),
+        ("SHOWER", shower_x + shower_width // 2, shower_y - 25),
+    ]
+    
+    for label_text, label_x, label_y in labels:
+        text_surface = FONT_SM.render(label_text, True, (100, 100, 100))
+        text_rect = text_surface.get_rect(center=(label_x, label_y))
+        # Background for label
+        bg_rect = text_rect.inflate(10, 5)
+        pygame.draw.rect(surface, (255, 255, 255, 200), bg_rect, border_radius=5)
+        surface.blit(text_surface, text_rect)
+    
+    # Draw player character in dorm interior
+    draw_dorm_player(surface)
+
+
+def update_dorm_player(keys):
+    """Update player movement in dorm interior view."""
+    dx = dy = 0
+    if keys[pygame.K_LEFT]: dx -= 1
+    if keys[pygame.K_RIGHT]: dx += 1
+    if keys[pygame.K_UP]: dy -= 1
+    if keys[pygame.K_DOWN]: dy += 1
+    
+    if dx or dy:
+        length = max(1, (dx*dx + dy*dy) ** 0.5)
+        vx = (dx/length) * state.speed
+        vy = (dy/length) * state.speed
+        
+        # New position
+        new_x = state.dorm_player_x + vx
+        new_y = state.dorm_player_y + vy
+        
+        # Keep player within screen bounds (with some margin)
+        margin = 20
+        new_x = clamp(new_x, margin, SCREEN_W - margin)
+        # Keep player above floor (don't go below floor level)
+        floor_y = SCREEN_H - 150
+        new_y = clamp(new_y, 100, floor_y - PLAYER_SIZE)
+        
+        state.dorm_player_x = new_x
+        state.dorm_player_y = new_y
+
+
 def draw_city_view(surface: pygame.Surface):
     """Draw city view with named buildings and moving cars when player reaches gate."""
     # Update car positions for animation
@@ -1059,6 +1391,14 @@ def check_overlap():
 
 
 
+# Global variables for dorm interior interaction areas
+dorm_bed_rect = None
+dorm_desk_rect = None
+dorm_locker_rect = None
+dorm_shower_rect = None
+dorm_exit_door_rect = None
+
+
 def open_popup_for(key: str):
     global active_popup, suppress_until_exit
     # Check if building is accessible at current time
@@ -1091,7 +1431,14 @@ def open_popup_for(key: str):
         'rebuild': rebuild_popup
     }
     if key == 'dorm':
-        active_popup = UI.dorm.build_popup(helpers)
+        # Show dorm interior view instead of popup
+        state.show_dorm_interior = True
+        state.popup_open = True
+        suppress_until_exit = True
+        # Position player near the entrance (exit door area)
+        state.dorm_player_x = SCREEN_W // 2  # Center horizontally
+        state.dorm_player_y = SCREEN_H - 150  # Near the floor/entrance area
+        toast("Entered dormitory - Click on items to interact")
     elif key == 'classroom':
         active_popup = UI.classroom.build_popup(helpers)
     elif key == 'library':
@@ -1338,6 +1685,12 @@ def check_gate_collision():
 
 
 def render():
+    # Handle dorm interior view
+    if state.show_dorm_interior:
+        SCREEN.fill((0, 0, 0))
+        draw_dorm_interior(SCREEN)
+        return
+    
     # Handle smooth transition
     if state.show_city_view:
         # Fade in city view smoothly - ensure city is always visible when show_city_view is True
@@ -1416,7 +1769,113 @@ def render():
         btn.draw(SCREEN, FONT)
 
 
+def handle_dorm_interior_click(mx, my):
+    """Handle clicks in dorm interior view."""
+    global dorm_bed_rect, dorm_desk_rect, dorm_locker_rect, dorm_shower_rect, dorm_exit_door_rect
+    
+    helpers = {
+        'addXP': state.add_xp,
+        'addItem': state.add_item,
+        'completeQuest': state.complete_quest,
+        'setEnergy': state.set_energy,
+        'addEnergy': state.add_energy,
+        'addKnowledge': state.add_knowledge,
+        'addStress': state.add_stress,
+        'addReputation': state.add_reputation,
+        'addDiscipline': state.add_discipline,
+        'state': state,
+        'toast': toast,
+        'close': close_popup,
+        'rebuild': rebuild_popup
+    }
+    
+    # Check exit door
+    if dorm_exit_door_rect and dorm_exit_door_rect.collidepoint(mx, my):
+        state.show_dorm_interior = False
+        state.popup_open = False
+        toast("Exited dormitory")
+        return True
+    
+    # Check bed (sleep)
+    if dorm_bed_rect and dorm_bed_rect.collidepoint(mx, my):
+        if state.energy < 100 or state.stress > 0:
+            state.set_energy(100)
+            stress_reduction = min(20, state.stress)
+            state.add_stress(-stress_reduction)
+            toast(f"💤 Slept! Energy restored to 100, Stress -{stress_reduction}")
+        else:
+            toast("You're already well-rested!")
+        return True
+    
+    # Check desk (study)
+    if dorm_desk_rect and dorm_desk_rect.collidepoint(mx, my):
+        if state.energy < 20:
+            toast("Too tired to study! Need at least 20 energy.")
+            return True
+        
+        if not state.flags['dormStudyDone']:
+            state.flags['dormStudyDone'] = True
+            knowledge_gain = 8
+            stress_gain = 3
+            energy_cost = 15
+            
+            if state.stress > 70:
+                knowledge_gain = int(knowledge_gain * 0.7)
+            
+            state.add_xp(10)
+            state.add_knowledge(knowledge_gain)
+            state.add_stress(stress_gain)
+            state.add_energy(-energy_cost)
+            state.add_discipline(2)
+            toast(f"📚 Studied! +10 XP, +{knowledge_gain} Knowledge, +{stress_gain} Stress, -{energy_cost} Energy")
+        else:
+            if state.energy < 15:
+                toast("Too tired to study! Need at least 15 energy.")
+                return True
+            knowledge_gain = 5
+            stress_gain = 2
+            energy_cost = 15
+            if state.stress > 70:
+                knowledge_gain = int(knowledge_gain * 0.7)
+            state.add_xp(5)
+            state.add_knowledge(knowledge_gain)
+            state.add_stress(stress_gain)
+            state.add_energy(-energy_cost)
+            state.add_discipline(1)
+            toast(f"📚 Studied! +5 XP, +{knowledge_gain} Knowledge, +{stress_gain} Stress, -{energy_cost} Energy")
+        return True
+    
+    # Check locker (get dorm key)
+    if dorm_locker_rect and dorm_locker_rect.collidepoint(mx, my):
+        if not state.flags['dormKey']:
+            state.flags['dormKey'] = True
+            state.add_item('Dorm Key')
+            toast("🔑 Dorm Key collected from locker!")
+        else:
+            toast("Locker is empty")
+        return True
+    
+    # Check shower (reduce stress, restore some energy)
+    if dorm_shower_rect and dorm_shower_rect.collidepoint(mx, my):
+        if state.energy < 5:
+            toast("Too tired to shower! Need at least 5 energy.")
+            return True
+        state.add_stress(-10)
+        state.add_energy(-5)
+        toast("🚿 Showered! Stress -10, Energy -5")
+        return True
+    
+    return False
+
+
 def handle_mouse(event):
+    # Handle dorm interior clicks
+    if state.show_dorm_interior:
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            mx, my = event.pos
+            if handle_dorm_interior_click(mx, my):
+                return True
+    
     # popup buttons
     if active_popup and active_popup.handle_event(event, (SCREEN_W, SCREEN_H)):
         return True
@@ -1477,7 +1936,11 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    if state.show_city_view:
+                    if state.show_dorm_interior:
+                        state.show_dorm_interior = False
+                        state.popup_open = False
+                        toast("Exited dormitory")
+                    elif state.show_city_view:
                         state.transition_alpha = 255  # Start fade out
                         state.show_city_view = False
                         toast("Returning to campus...")
@@ -1490,7 +1953,10 @@ def main():
                 handle_mouse(event)
 
         keys = pygame.key.get_pressed()
-        if state.show_city_view:
+        if state.show_dorm_interior:
+            # Allow player movement in dorm interior
+            update_dorm_player(keys)
+        elif state.show_city_view:
             update_city_player(keys)
             check_city_gate_collision()
         else:
